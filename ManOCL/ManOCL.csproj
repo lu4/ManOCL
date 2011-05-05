@@ -1,0 +1,148 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="3.5" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>9.0.21022</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{F08FA145-D515-43C6-9A00-6159AAC19DDE}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>ManOCL</RootNamespace>
+    <AssemblyName>ManOCL</AssemblyName>
+    <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="IO\CloudFile.cs" />
+    <Compile Include="IO\CloudFileStream.cs" />
+    <Compile Include="IO\CloudFolder.cs" />
+    <Compile Include="IO\DeviceBufferStream.cs" />
+    <Compile Include="IO\StreamJoin.cs" />
+    <Compile Include="IO\StreamSegment.cs" />
+    <Compile Include="IO\UnmanagedReader.cs" />
+    <Compile Include="IO\UnmanagedWriter.cs" />
+    <Compile Include="Argument.cs" />
+    <Compile Include="CommandQueue.cs" />
+    <Compile Include="CommandQueueProperties.cs" />
+    <Compile Include="Context.cs" />
+    <Compile Include="Device.cs" />
+    <Compile Include="DeviceBuffer.cs" />
+    <Compile Include="DeviceBufferAccess.cs" />
+    <Compile Include="DeviceConstantMemory.cs" />
+    <Compile Include="DeviceExecCapabilities.cs" />
+    <Compile Include="DeviceFPConfig.cs" />
+    <Compile Include="DeviceGlobalMemory.cs" />
+    <Compile Include="DeviceLocalMemory.cs" />
+    <Compile Include="DeviceLocalMemType.cs" />
+    <Compile Include="DeviceMemCacheType.cs" />
+    <Compile Include="Devices.cs" />
+    <Compile Include="DeviceType.cs" />
+    <Compile Include="Event.cs" />
+    <Compile Include="Events.cs" />
+    <Compile Include="HostMemory.cs" />
+    <Compile Include="Native\AddressingMode.cs" />
+    <Compile Include="Native\BuildStatus.cs" />
+    <Compile Include="Native\ChannelOrder.cs" />
+    <Compile Include="Native\ChannelType.cs" />
+    <Compile Include="Native\CommandQueueInfo.cs" />
+    <Compile Include="Native\CommandType.cs" />
+    <Compile Include="Native\ContextInfo.cs" />
+    <Compile Include="Native\ContextProperties.cs" />
+    <Compile Include="Native\DeviceAddressInfo.cs" />
+    <Compile Include="Native\DeviceInfo.cs" />
+    <Compile Include="Native\Error.cs" />
+    <Compile Include="Native\EventInfo.cs" />
+    <Compile Include="Native\ExecutionStatus.cs" />
+    <Compile Include="Native\FilterMode.cs" />
+    <Compile Include="Native\ImageFormat.cs" />
+    <Compile Include="Native\ImageInfo.cs" />
+    <Compile Include="Native\KernelInfo.cs" />
+    <Compile Include="Native\KernelWorkGroupInfo.cs" />
+    <Compile Include="Native\Map.cs" />
+    <Compile Include="Native\MemFlags.cs" />
+    <Compile Include="Native\MemInfo.cs" />
+    <Compile Include="Native\MemObjectType.cs" />
+    <Compile Include="Native\OpenCLCommandQueue.cs" />
+    <Compile Include="Native\OpenCLContext.cs" />
+    <Compile Include="Native\OpenCLDevice.cs" />
+    <Compile Include="Native\OpenCLEvent.cs" />
+    <Compile Include="Native\OpenCLKernel.cs" />
+    <Compile Include="Native\OpenCLMem.cs" />
+    <Compile Include="Native\OpenCLPlatform.cs" />
+    <Compile Include="Native\OpenCLProgram.cs" />
+    <Compile Include="Native\OpenCLSampler.cs" />
+    <Compile Include="Native\OpenGL\CLGLObjectType.cs" />
+    <Compile Include="Native\OpenGL\CLGLTextureInfo.cs" />
+    <Compile Include="Native\OpenGL\OpenCLGLDriver.cs" />
+    <Compile Include="Native\PlatformInfo.cs" />
+    <Compile Include="Native\ProfilingInfo.cs" />
+    <Compile Include="Native\ProgramBuildInfo.cs" />
+    <Compile Include="Native\ProgramInfo.cs" />
+    <Compile Include="Native\SamplerInfo.cs" />
+    <Compile Include="Native\Version.cs" />
+    <Compile Include="Native\Wrapper.cs" />
+    <Compile Include="Kernel.cs" />
+    <Compile Include="Kernels.cs" />
+    <Compile Include="OpenCLDriver.cs" />
+    <Compile Include="OpenCLError.cs" />
+    <Compile Include="Platform.cs" />
+    <Compile Include="Platforms.cs" />
+    <Compile Include="Profiler.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="Segment.cs" />
+    <Compile Include="ReadOnlyIndexer.cs" />
+    <Compile Include="Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="SizeT.cs" />
+    <Compile Include="ValueArgument.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ManOCL.dll.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources.resx">
+      <SubType>Designer</SubType>
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
