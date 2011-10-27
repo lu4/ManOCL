@@ -1,20 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using ManOCL.Native;
+using ManOCL.Internal.OpenCL;
 using System.Runtime.InteropServices;
+using ManOCL.Internal;
+
 
 namespace ManOCL
 {
     public partial class Context
     {
         private Boolean disposed;
-
-        private Context(OpenCLContext openclContext, Platforms platforms, Devices devices)
-        {
+				
+        private Context(CLContext openclContext, Platforms platforms, Devices devices)
+        {			
             this.Devices = devices;
             this.Platforms = platforms;
-            this.OpenCLContext = openclContext;
+            this.CLContext = openclContext;
         }
 
         private static IntPtr[] GetContextProperties(Platforms platforms)
@@ -24,49 +26,105 @@ namespace ManOCL
 
             for (int i = 0; i < count; i++)
             {
-                properties[2 * i] = new IntPtr((Int32)ContextProperties.Platform);
-                properties[2 * i + 1] = platforms[i].OpenCLPlatform.Value;
+                properties[2 * i] = new IntPtr((Int32)CLContextProperties.Platform);
+                properties[2 * i + 1] = platforms[i].CLPlatformID.Value;
             }
             return properties;
         }
 
-        internal OpenCLContext OpenCLContext { get; private set; }
+        internal CLContext CLContext { get; private set; }
 
         public static Context Create()
         {
-            return Create(Platforms.Default, Devices.Default);
+            return Create(Context.Default.Platforms, Context.Default.Devices);
         }
         public static Context Create(Devices devices)
         {
-            return Create(Platforms.Default, devices);
+            return Create(Context.Default.Platforms, devices);
         }
         public static Context Create(Platforms platforms)
         {
-            return Create(platforms, Devices.Default);
+            return Create(platforms, Devices.Create(Device.DefaultDeviceType, platforms));
         }
         public static Context Create(Platforms platforms, Devices devices)
         {
-            IntPtr[] properties = GetContextProperties(platforms);
+            CLError error = CLError.None;
 
-            GCHandle propertiesHandle = GCHandle.Alloc(properties, GCHandleType.Pinned);
+            // TODO: Add parameter pfn_notify (logging function)
+            CLContext openclContext = OpenCLDriver.clCreateContext(GetContextProperties(platforms), devices.Count, devices.OpenCLDeviceArray, null, IntPtr.Zero, ref error);
+
+            OpenCLError.Validate(error);
+
+            return new Context(openclContext, platforms, devices);
+        }
+
+        public static Context ShareWithCGL(IntPtr cglShareGroup)
+        {
+            IntPtr[] properties = 
+			{
+				new IntPtr(0x10000000), // CL_CONTEXT_PROPERTY_USE_CGL_SHAREGROUP_APPLE
+				cglShareGroup,
+				new IntPtr(0)
+			};
+
+            CLError error = CLError.None;
+
+            // TODO: Add parameter pfn_notify (logging function)
+            CLContext openclContext = OpenCLDriver.clCreateContext(properties, 0, null, null, IntPtr.Zero, ref error);
+
+            OpenCLError.Validate(error);
+
+            SizeT devicesSize = SizeT.Zero;
+
+            OpenCLError.Validate(OpenCLDriver.clGetContextInfo(openclContext, CLContextInfo.Devices, SizeT.Zero, IntPtr.Zero, ref devicesSize));
+
+            CLDeviceID[] devices = new CLDeviceID[((Int64)(devicesSize)) / IntPtr.Size];
+
+            GCHandle devicesHandle = GCHandle.Alloc(devices, GCHandleType.Pinned);
 
             try
             {
-                Error error;
+                OpenCLError.Validate(OpenCLDriver.clGetContextInfo(openclContext, CLContextInfo.Devices, devicesSize, devicesHandle.AddrOfPinnedObject(), ref devicesSize));
 
-                // TODO: Add parameter pfn_notify (logging function)
-                OpenCLContext openclContext = OpenCLDriver.clCreateContext(propertiesHandle.AddrOfPinnedObject(), devices.Count, devices.OpenCLDeviceArray, null, IntPtr.Zero, out error);
+                Dictionary<CLPlatformID, CLPlatformID> platformsDictionary = new Dictionary<CLPlatformID, CLPlatformID>();
 
-                OpenCLError.Validate(error);
+                CLPlatformID[] platforms = null;
 
-                return new Context(openclContext, platforms, devices);
+                foreach (CLDeviceID device in devices)
+                {
+                    SizeT platformsSize = SizeT.Zero;
+
+                    OpenCLError.Validate(OpenCLDriver.clGetDeviceInfo(device, CLDeviceInfo.Platform, SizeT.Zero, platforms, ref platformsSize));
+
+                    platforms = new CLPlatformID[((Int64)(platformsSize)) / IntPtr.Size];
+
+                    OpenCLError.Validate(OpenCLDriver.clGetDeviceInfo(device, CLDeviceInfo.Platform, platformsSize, platforms, ref platformsSize));
+
+                    foreach (CLPlatformID platform in platforms)
+                    {
+                        if (!platformsDictionary.ContainsKey(platform))
+                        {
+                            platformsDictionary.Add(platform, platform);
+                        }
+                    }
+                }
+
+                platforms = new CLPlatformID[platformsDictionary.Count];
+
+                Int32 index = 0;
+
+                foreach (var platform in platformsDictionary.Keys)
+                {
+                    platforms[index++] = platform;
+                }
+
+                return new Context(openclContext, new Platforms(platforms), new Devices(devices));
             }
             finally
             {
-                propertiesHandle.Free();
+                devicesHandle.Free();
             }
         }
-
         public Devices Devices { get; private set; }
         
         public Platforms Platforms { get; private set; }
@@ -77,21 +135,48 @@ namespace ManOCL
         {
             get
             {
-                if (_Default == default(Context))
+                if (_Default == null)
                 {
-                    _Default = Create();
+					Platforms platforms = Platforms.Create();
+                    Devices devices = Devices.Create(CLDeviceType.All, platforms);
+						
+					_Default = Create(platforms, devices);
                 }
 
                 return _Default;
             }
+            set
+            {
+                _Default = value;
+            }
         }
         #endregion
+				
+		internal String ToIndentedString(Int32 ident, Int32 identSize)
+		{
+			String identation = new String(' ', identSize * ident);
+			
+			StringBuilder sb = new StringBuilder();
+			
+			sb.AppendLine(identation + "Context");
+			sb.AppendLine(identation + "{");
+			sb.AppendLine(Platforms.ToIdentedString(ident + 1, identSize));
+			sb.AppendLine(Devices.ToIdentedString(ident + 1, identSize));			
+			sb.AppendLine(identation + "}");
+			
+			return sb.ToString();			
+		}
+		
+ 		public override string ToString ()
+		{
+			return ToIndentedString(0, Globals.IdentSize);
+		}
 
-        ~Context()
+		~Context()
         {
             if (!disposed)
             {
-                OpenCLError.Validate(OpenCLDriver.clReleaseContext(OpenCLContext));
+                OpenCLError.Validate(OpenCLDriver.clReleaseContext(CLContext));
 
                 disposed = true;
             }

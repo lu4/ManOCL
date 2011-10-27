@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="3.5" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -12,6 +12,21 @@
     <AssemblyName>ManOCL</AssemblyName>
     <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -22,6 +37,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -31,6 +47,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -38,14 +55,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="IO\CloudFile.cs" />
-    <Compile Include="IO\CloudFileStream.cs" />
-    <Compile Include="IO\CloudFolder.cs" />
-    <Compile Include="IO\DeviceBufferStream.cs" />
-    <Compile Include="IO\StreamJoin.cs" />
-    <Compile Include="IO\StreamSegment.cs" />
-    <Compile Include="IO\UnmanagedReader.cs" />
-    <Compile Include="IO\UnmanagedWriter.cs" />
+    <Compile Include="AddressingMode.cs" />
     <Compile Include="Argument.cs" />
     <Compile Include="CommandQueue.cs" />
     <Compile Include="CommandQueueProperties.cs" />
@@ -64,51 +74,65 @@
     <Compile Include="DeviceType.cs" />
     <Compile Include="Event.cs" />
     <Compile Include="Events.cs" />
+    <Compile Include="FilterMode.cs" />
+    <Compile Include="Internal.OpenCL.OpenGL\CLGLObjectType.cs" />
+    <Compile Include="Internal.OpenCL.OpenGL\CLGLTextureInfo.cs" />
+    <Compile Include="Internal.OpenCL.OpenGL\OpenCLGLDriver.cs" />
+    <Compile Include="Internal.OpenCL\CLAddressingMode.cs" />
+    <Compile Include="Internal.OpenCL\CLBool.cs" />
+    <Compile Include="Internal.OpenCL\CLBuildStatus.cs" />
+    <Compile Include="Internal.OpenCL\CLChannelOrder.cs" />
+    <Compile Include="Internal.OpenCL\CLChannelType.cs" />
+    <Compile Include="Internal.OpenCL\CLCommandQueue.cs" />
+    <Compile Include="Internal.OpenCL\CLCommandQueueInfo.cs" />
+    <Compile Include="Internal.OpenCL\CLCommandQueueProperties.cs" />
+    <Compile Include="Internal.OpenCL\CLCommandType.cs" />
+    <Compile Include="Internal.OpenCL\CLContext.cs" />
+    <Compile Include="Internal.OpenCL\CLContextInfo.cs" />
+    <Compile Include="Internal.OpenCL\CLContextProperties.cs" />
+    <Compile Include="Internal.OpenCL\CLDeviceAddressInfo.cs" />
+    <Compile Include="Internal.OpenCL\CLDeviceExecCapabilities.cs" />
+    <Compile Include="Internal.OpenCL\CLDeviceFPConfig.cs" />
+    <Compile Include="Internal.OpenCL\CLDeviceID.cs" />
+    <Compile Include="Internal.OpenCL\CLDeviceInfo.cs" />
+    <Compile Include="Internal.OpenCL\CLDeviceLocalMemType.cs" />
+    <Compile Include="Internal.OpenCL\CLDeviceMemCacheType.cs" />
+    <Compile Include="Internal.OpenCL\CLDeviceType.cs" />
+    <Compile Include="Internal.OpenCL\CLError.cs" />
+    <Compile Include="Internal.OpenCL\CLEvent.cs" />
+    <Compile Include="Internal.OpenCL\CLEventInfo.cs" />
+    <Compile Include="Internal.OpenCL\CLExecutionStatus.cs" />
+    <Compile Include="Internal.OpenCL\CLFilterMode.cs" />
+    <Compile Include="Internal.OpenCL\CLImageFormat.cs" />
+    <Compile Include="Internal.OpenCL\CLImageInfo.cs" />
+    <Compile Include="Internal.OpenCL\CLKernel.cs" />
+    <Compile Include="Internal.OpenCL\CLKernelInfo.cs" />
+    <Compile Include="Internal.OpenCL\CLKernelWorkGroupInfo.cs" />
+    <Compile Include="Internal.OpenCL\CLMapFlags.cs" />
+    <Compile Include="Internal.OpenCL\CLMem.cs" />
+    <Compile Include="Internal.OpenCL\CLMemFlags.cs" />
+    <Compile Include="Internal.OpenCL\CLMemInfo.cs" />
+    <Compile Include="Internal.OpenCL\CLMemObjectType.cs" />
+    <Compile Include="Internal.OpenCL\CLPlatformID.cs" />
+    <Compile Include="Internal.OpenCL\CLPlatformInfo.cs" />
+    <Compile Include="Internal.OpenCL\CLProfilingInfo.cs" />
+    <Compile Include="Internal.OpenCL\CLProgram.cs" />
+    <Compile Include="Internal.OpenCL\CLProgramBuildInfo.cs" />
+    <Compile Include="Internal.OpenCL\CLProgramInfo.cs" />
+    <Compile Include="Internal.OpenCL\CLSampler.cs" />
+    <Compile Include="Internal.OpenCL\CLSamplerInfo.cs" />
+    <Compile Include="Internal.OpenCL\OpenCLDriver.cs" />
+    <Compile Include="Internal.OpenCL\OpenCLVersion.cs" />
+    <Compile Include="SizeT.cs" />
     <Compile Include="HostMemory.cs" />
-    <Compile Include="Native\AddressingMode.cs" />
-    <Compile Include="Native\BuildStatus.cs" />
-    <Compile Include="Native\ChannelOrder.cs" />
-    <Compile Include="Native\ChannelType.cs" />
-    <Compile Include="Native\CommandQueueInfo.cs" />
-    <Compile Include="Native\CommandType.cs" />
-    <Compile Include="Native\ContextInfo.cs" />
-    <Compile Include="Native\ContextProperties.cs" />
-    <Compile Include="Native\DeviceAddressInfo.cs" />
-    <Compile Include="Native\DeviceInfo.cs" />
-    <Compile Include="Native\Error.cs" />
-    <Compile Include="Native\EventInfo.cs" />
-    <Compile Include="Native\ExecutionStatus.cs" />
-    <Compile Include="Native\FilterMode.cs" />
-    <Compile Include="Native\ImageFormat.cs" />
-    <Compile Include="Native\ImageInfo.cs" />
-    <Compile Include="Native\KernelInfo.cs" />
-    <Compile Include="Native\KernelWorkGroupInfo.cs" />
-    <Compile Include="Native\Map.cs" />
-    <Compile Include="Native\MemFlags.cs" />
-    <Compile Include="Native\MemInfo.cs" />
-    <Compile Include="Native\MemObjectType.cs" />
-    <Compile Include="Native\OpenCLCommandQueue.cs" />
-    <Compile Include="Native\OpenCLContext.cs" />
-    <Compile Include="Native\OpenCLDevice.cs" />
-    <Compile Include="Native\OpenCLEvent.cs" />
-    <Compile Include="Native\OpenCLKernel.cs" />
-    <Compile Include="Native\OpenCLMem.cs" />
-    <Compile Include="Native\OpenCLPlatform.cs" />
-    <Compile Include="Native\OpenCLProgram.cs" />
-    <Compile Include="Native\OpenCLSampler.cs" />
-    <Compile Include="Native\OpenGL\CLGLObjectType.cs" />
-    <Compile Include="Native\OpenGL\CLGLTextureInfo.cs" />
-    <Compile Include="Native\OpenGL\OpenCLGLDriver.cs" />
-    <Compile Include="Native\PlatformInfo.cs" />
-    <Compile Include="Native\ProfilingInfo.cs" />
-    <Compile Include="Native\ProgramBuildInfo.cs" />
-    <Compile Include="Native\ProgramInfo.cs" />
-    <Compile Include="Native\SamplerInfo.cs" />
-    <Compile Include="Native\Version.cs" />
-    <Compile Include="Native\Wrapper.cs" />
+    <Compile Include="IO\DeviceBufferStream.cs" />
+    <Compile Include="IO\StreamJoin.cs" />
+    <Compile Include="IO\StreamSegment.cs" />
+    <Compile Include="IO\UnmanagedReader.cs" />
+    <Compile Include="IO\UnmanagedWriter.cs" />
     <Compile Include="Kernel.cs" />
     <Compile Include="Kernels.cs" />
-    <Compile Include="OpenCLDriver.cs" />
+    <Compile Include="Mem.cs" />
     <Compile Include="OpenCLError.cs" />
     <Compile Include="Platform.cs" />
     <Compile Include="Platforms.cs" />
@@ -121,9 +145,11 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="SizeT.cs" />
     <Compile Include="ValueArgument.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Globals.cs" />
+    <Compile Include="DeviceImage.cs" />
+    <Compile Include="DeviceSampler.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ManOCL.dll.config">
@@ -137,6 +163,24 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1 Client Profile</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Windows.Installer.3.1">
+      <Visible>False</Visible>
+      <ProductName>Windows Installer 3.1</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

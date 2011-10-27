@@ -3,35 +3,36 @@ using System.Collections.Generic;
 using System.Text;
 using System.Runtime.InteropServices;
 
+using ManOCL.Internal;
+using ManOCL.Internal.OpenCL;
+
+
 namespace ManOCL
 {
     public class ValueArgument<T> : Argument
         where T : struct
     {
-        private GCHandle valueHandle;
-
         public T Value { get; private set; }
 
         public ValueArgument(T value)
         {
-            this.valueHandle = GCHandle.Alloc(this.Value = value, GCHandleType.Pinned);
-        }
+			this.Value = value;
+		}
 
-        internal override IntPtr IntPtr
-        {
-            get
-            {
-                return valueHandle.AddrOfPinnedObject();
-            }
-        }
-        internal override IntPtr IntPtrSize
-        {
-            get
-            {
-                return new IntPtr(Marshal.SizeOf(typeof(T)));
-            }
-        }
-
+		internal override void SetAsKernelArgument(CLKernel kernel, int index)
+		{
+			GCHandle handle = GCHandle.Alloc(Value, GCHandleType.Pinned);
+			
+			try
+			{
+            	OpenCLError.Validate(OpenCLDriver.clSetKernelArg(kernel, index, new SizeT(Marshal.SizeOf(typeof(T))), handle.AddrOfPinnedObject()));
+			}
+			finally
+			{
+				handle.Free();
+			}
+		}
+		
         public static implicit operator ValueArgument<T>(T value)
         {
             return new ValueArgument<T>(value);

@@ -1,15 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using ManOCL.Native;
+using ManOCL.Internal.OpenCL;
 using System.Collections;
 
 namespace ManOCL
 {
     public class Kernels : IEnumerable<Kernel>
     {
-        public const Int32 DefaultCount = 32;
-
         private Kernel[] kernelsArray;
         private Dictionary<String, Kernel> kernelsDictionary;
 
@@ -22,11 +20,11 @@ namespace ManOCL
         {
             Validate(commandQueue, program);
 
-            Int32 numKernelsRet;
+            Int32 numKernelsRet = 0;
 
-            OpenCLKernel[] openclKernels = new OpenCLKernel[kernelsCount];
+            CLKernel[] openclKernels = new CLKernel[kernelsCount];
 
-            OpenCLError.Validate(OpenCLDriver.clCreateKernelsInProgram(program.OpenCLProgram, openclKernels.Length, openclKernels, out numKernelsRet));
+            OpenCLError.Validate(OpenCLDriver.clCreateKernelsInProgram(program.CLProgram, openclKernels.Length, openclKernels, ref numKernelsRet));
 
             Kernel[] result = new Kernel[numKernelsRet];
 
@@ -105,7 +103,7 @@ namespace ManOCL
         }
         public static Kernels Create(String[] sources, Dictionary<String, Argument[]> arguments, Int32 kernelInfoBufferSize, Int32 kernelsCount, String programBuildOptions)
         {
-            return Create(CommandQueue.Default, Program.Create(sources, Context.Default, Devices.Default, programBuildOptions), arguments, kernelInfoBufferSize, kernelsCount);
+            return Create(CommandQueue.Default, Program.Create(sources, Context.Default, Context.Default.Devices, programBuildOptions), arguments, kernelInfoBufferSize, kernelsCount);
         }
         public static Kernels Create(CommandQueue commandQueue, Program program, Dictionary<String, Argument[]> arguments, Int32 kernelInfoBufferSize, Int32 kernelsCount)
         {

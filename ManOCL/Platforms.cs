@@ -1,32 +1,31 @@
 ﻿using System;
+using System.Text;
 using System.Collections;
 using System.Collections.Generic;
 
-using ManOCL.Native;
+using ManOCL.Internal.OpenCL;
 
 namespace ManOCL
 {
     public partial class Platforms : IEnumerable<Platform>
     {
-        public const Int32 DefaultCount = 8;
-
         private Platform[] platforms;
-        internal OpenCLPlatform[] OpenCLPlatforms { get; private set; }
+        internal CLPlatformID[] OpenCLPlatforms { get; private set; }
 
-        internal Platforms(OpenCLPlatform[] openCLPlatforms, Int32 platformInfoBufferSize)
+        internal Platforms(CLPlatformID[] openCLPlatforms)
         {
 			this.OpenCLPlatforms = openCLPlatforms;
             this.platforms = new Platform[openCLPlatforms.Length];
             
             for (int i = 0; i < platforms.Length; i++)
             {
-                platforms[i] = new Platform(openCLPlatforms[i], platformInfoBufferSize);
+                platforms[i] = new Platform(openCLPlatforms[i]);
             }
         }
 
-        private static OpenCLPlatform[] GetOpenCLPlatforms(Devices devices)
+        private static CLPlatformID[] GetOpenCLPlatforms(Devices devices)
         {
-            Dictionary<OpenCLPlatform, Device> platforms = new Dictionary<OpenCLPlatform, Device>();
+            Dictionary<CLPlatformID, Device> platforms = new Dictionary<CLPlatformID, Device>();
 
             foreach (Device device in devices)
             {
@@ -36,7 +35,7 @@ namespace ManOCL
                 }
             }
 
-            OpenCLPlatform[] result = new OpenCLPlatform[platforms.Count];
+            CLPlatformID[] result = new CLPlatformID[platforms.Count];
 
             platforms.Keys.CopyTo(result, 0);
 
@@ -45,28 +44,20 @@ namespace ManOCL
 
         public static Platforms Filter(Devices devices)
         {
-            return new Platforms(GetOpenCLPlatforms(devices), Platform.DefaultInfoBufferSize);
-        }
-        public static Platforms Filter(Devices devices, Int32 platformInfoBufferSize)
-        {
-            return new Platforms(GetOpenCLPlatforms(devices), platformInfoBufferSize);
+            return new Platforms(GetOpenCLPlatforms(devices));
         }
 
         public static Platforms Create()
         {
-            return Create(DefaultCount, Platform.DefaultInfoBufferSize);
-        }
-        public static Platforms Create(Int32 platformsCount, Int32 platformInfoBufferSize)
-        {
-            Int32 realPlatformsCount;
+            Int32 platformsCount = 0;
 
-            OpenCLPlatform[] platforms = new OpenCLPlatform[platformsCount];
+            OpenCLError.Validate(OpenCLDriver.clGetPlatformIDs(0, null, ref platformsCount));
 
-            OpenCLError.Validate(OpenCLDriver.clGetPlatformIDs(platforms.Length, platforms, out realPlatformsCount));
+            CLPlatformID[] platforms = new CLPlatformID[platformsCount];
 
-            Array.Resize(ref platforms, (Int32)realPlatformsCount);
+            OpenCLError.Validate(OpenCLDriver.clGetPlatformIDs(platformsCount, platforms, ref platformsCount));
 
-            return new Platforms(platforms, platformInfoBufferSize);
+            return new Platforms(platforms);
         }
 
         public Int32 Count
@@ -93,22 +84,6 @@ namespace ManOCL
             }
         }
 
-        #region public static Platforms Default { get; } /* Singleton */
-        private static Platforms _Default;
-        public static Platforms Default
-        {
-            get
-            {
-                if (_Default == default(Platforms))
-                {
-                    _Default = Platforms.Create();
-                }
-
-                return _Default;
-            }
-        }
-        #endregion
-
         IEnumerator IEnumerable.GetEnumerator()
         {
             foreach (Platform platform in platforms)
@@ -116,5 +91,29 @@ namespace ManOCL
                 yield return platform;
             }
         }
-    }
+		
+		internal String ToIdentedString(Int32 ident, Int32 identSize)
+		{
+			String identation = new String(' ', identSize * ident);
+
+			StringBuilder sb = new StringBuilder();
+			
+			sb.AppendLine(identation +  "Platforms");
+			sb.AppendLine(identation + "{");
+			
+			foreach (Platform platform in platforms)
+			{
+				sb.AppendLine(platform.ToIdentedString(ident + 1, identSize));
+			}
+			
+			sb.AppendLine(identation + "}");
+			
+			return sb.ToString();			
+		}
+		
+ 		public override string ToString ()
+		{
+			return ToIdentedString(0, Globals.IdentSize);
+		}
+   }
 }

@@ -1,16 +1,47 @@
 ﻿using System;
 
+using ManOCL.Internal.OpenCL;
+
 namespace ManOCL
 {
-    using Native;
-
-    public class Event
+    public class Event : IDisposable
     {
-        internal OpenCLEvent OpenCLEvent { get; private set; }
+		private Boolean disposed;
+		
+        internal CLEvent CLEvent { get; private set; }
 
-        internal Event(OpenCLEvent openclEvent)
+        internal Event(CLEvent openclEvent)
         {
-            this.OpenCLEvent = openclEvent;
+            this.CLEvent = openclEvent;
         }
+		
+		#region IDisposable implementation
+		public void Dispose()
+		{
+			Dispose(true);
+			
+			GC.SuppressFinalize(this);
+		}
+		
+		protected virtual void Dispose(Boolean disposing)
+		{
+			if (!disposed)
+			{
+				disposed = true;
+				
+				// if (disposing)
+				// {
+				// 		No managed resources to dispose
+				// }
+				
+				OpenCLDriver.clReleaseEvent(CLEvent);
+			}
+		}
+		#endregion
+		
+		~Event()
+		{
+			Dispose(false);
+		}
     }
 }

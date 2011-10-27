@@ -1,7 +1,9 @@
 using System;
-using ManOCL.Native;
+using ManOCL.Internal.OpenCL;
 using System.Runtime.InteropServices;
 using ManOCL;
+using ManOCL.Internal;
+
 
 namespace ManOCL
 {
@@ -19,9 +21,9 @@ namespace ManOCL
 	
 	internal class OpenCLError : OpenCLException
 	{
-		internal Error ErrorCode { get; private set; }
+		internal CLError ErrorCode { get; private set; }
 
-		internal OpenCLError(Error errorCode)
+		internal OpenCLError(CLError errorCode)
 		{
 			this.ErrorCode = errorCode;
 		}
@@ -36,17 +38,17 @@ namespace ManOCL
 
 		public override String ToString()
 		{
-			return String.Format(Resources.OpenCL_error_occured_ErrorCode_additional_info, ErrorCode, BaseExceptionString);
+			return String.Format("OpenCL error occured, error code = {0}, additional info:\r\n{1}", ErrorCode, BaseExceptionString);
 		}
 		
-		internal static void Validate(Error error)
+		internal static void Validate(CLError error)
 		{
-			if (error != Error.None) throw new OpenCLError(error);
+			if (error != CLError.None) throw new OpenCLError(error);
 		}
 
 		internal static void Validate(Int32 error)
 		{
-			if ((Error)error != Error.None) throw new OpenCLError((Error)error);
+			if ((CLError)error != CLError.None) throw new OpenCLError((CLError)error);
 		}
 	}
 
@@ -54,7 +56,7 @@ namespace ManOCL
     {
         public String BuildLog { get; private set; }
 
-        public OpenCLBuildError(Error error, String buildLog)
+        public OpenCLBuildError(CLError error, String buildLog)
             : base(error)
         {
             this.BuildLog = buildLog;
@@ -62,29 +64,33 @@ namespace ManOCL
 
         public override String ToString()
         {
-            return String.Format(Resources.Program_failed_to_build_ErrorCode_BuildLog_Additional_info, ErrorCode, BuildLog, BaseExceptionString);
+            return String.Format("Program failed to build, error code = {0}, build log:\r\n{1}\r\nAdditionalInfo:\r\n{2}", ErrorCode, BuildLog, BaseExceptionString);
         }
 
-        internal static void ValidateBuild(OpenCLProgram openclProgram, Device device, Error error)
+        internal static void ValidateBuild(CLProgram openclProgram, Device device, CLError error)
         {
-            if (Error.None != error)
+            if (CLError.None != error)
             {
-                byte[] buffer = new byte[1024 * 64];
+				SizeT bufferSize = SizeT.Zero;
+				
+                OpenCLError.Validate(OpenCLDriver.clGetProgramBuildInfo(openclProgram, device.CLDeviceID, CLProgramBuildInfo.Log, SizeT.Zero, IntPtr.Zero, ref bufferSize));
+				
+                byte[] buffer = new byte[(Int64)bufferSize];
 
                 GCHandle bufferHandle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
 
                 try
                 {
-                    OpenCLDriver.clGetProgramBuildInfo(openclProgram, device.OpenCLDevice, ProgramBuildInfo.Log, new IntPtr(buffer.Length), bufferHandle.AddrOfPinnedObject(), IntPtr.Zero);
+                    OpenCLError.Validate(OpenCLDriver.clGetProgramBuildInfo(openclProgram, device.CLDeviceID, CLProgramBuildInfo.Log, new SizeT(buffer.LongLength), bufferHandle.AddrOfPinnedObject(), ref bufferSize));
+
+                    Int32 count = Array.IndexOf<byte>(buffer, 0);
+
+                    throw new OpenCLBuildError(error, System.Text.Encoding.ASCII.GetString(buffer, 0, count < 0 ? buffer.Length : count).Trim());
                 }
                 finally
                 {
                     bufferHandle.Free();
                 }
-
-                Int32 count = Array.IndexOf<byte>(buffer, 0);
-
-                throw new OpenCLBuildError(error, System.Text.Encoding.ASCII.GetString(buffer, 0, count < 0 ? buffer.Length : count));
             }
         }
     }

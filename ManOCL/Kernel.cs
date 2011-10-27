@@ -1,29 +1,28 @@
 ﻿using System;
-using ManOCL.Native;
+using ManOCL.Internal.OpenCL;
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
+using ManOCL.Internal;
+
 
 namespace ManOCL
 {
     public partial class Kernel
     {
-        /* Constants */
-        public const Int32 DefaultInfoBufferSize = 256;
-
         /* Private members */
         private bool disposed;
 
         /* Internal members */
-        internal OpenCLKernel OpenCLKernel { get; private set; }
+        internal CLKernel CLKernel { get; private set; }
 
-        internal Kernel(OpenCLKernel openclKernel, Program program, CommandQueue commandQueue, Int32 kernelInfoBufferSize)
-            : this(openclKernel, program, commandQueue, GetKernelInfoString(openclKernel, KernelInfo.FunctionName, kernelInfoBufferSize))
+        internal Kernel(CLKernel openclKernel, Program program, CommandQueue commandQueue, Int32 kernelInfoBufferSize)
+            : this(openclKernel, program, commandQueue, GetKernelInfoString(openclKernel, CLKernelInfo.FunctionName, kernelInfoBufferSize))
 
         {
         }
-        internal Kernel(OpenCLKernel openclKernel, Program program, CommandQueue commandQueue, String name)
+        internal Kernel(CLKernel openclKernel, Program program, CommandQueue commandQueue, String name)
         {
-            this.OpenCLKernel = openclKernel;
+            this.CLKernel = openclKernel;
 
             this.Program = program;
             this.Context = program.Context;
@@ -34,66 +33,38 @@ namespace ManOCL
 
         internal void InitializeArguments(Argument[] arguments)
         {
-            Int32 numArgs = GetKernelInfo<Int32>(OpenCLKernel, KernelInfo.NumArgs);
+            Int32 numArgs = GetKernelInfo<Int32>(CLKernel, CLKernelInfo.NumArgs);
 
             if (arguments == null) throw new ArgumentException(String.Format(Resources.No_arguments_specified_for_kernel, this.Name));
             if (numArgs != arguments.Length) throw new ArgumentException(String.Format(Resources.Amount_of_arguments_supplied_is_not_equal_to_actual_amount_of_arguments_for_kernel, this.Name));
-
-            for (Int32 i = 0; i < arguments.Length; i++)
+			
+            for (Int32 argumentIndex = 0; argumentIndex < arguments.Length; argumentIndex++)
             {
-                Argument argument = arguments[i];
-
-                IntPtr argumentIntPtr = argument.IntPtr;
-
-
-                GCHandle argumentIntPtrHandle = GCHandle.Alloc(argumentIntPtr, GCHandleType.Pinned);
-
-                try
-                {
-                    OpenCLError.Validate(OpenCLDriver.clSetKernelArg(OpenCLKernel, i, argument.IntPtrSize, argumentIntPtrHandle.AddrOfPinnedObject()));
-                }
-                finally
-                {
-                    argumentIntPtrHandle.Free();
-                }
+				arguments[argumentIndex].SetAsKernelArgument(CLKernel, argumentIndex);
             }
 
             this.Arguments = new ReadOnlyIndexer<Argument>(arguments);
         }
 
-        internal Event ExecuteInternal(IntPtr[] globalWorkSize)
+        internal Event ExecuteInternal(SizeT[] globalWorkSize)
         {
-            return ExecuteInternal(globalWorkSize, null, null, null);
+            return ExecuteInternal(globalWorkSize, null, Events.Empty, null);
         }
-        internal Event ExecuteInternal(IntPtr[] globalWorkSize, IntPtr[] localWorkSize)
+        internal Event ExecuteInternal(SizeT[] globalWorkSize, SizeT[] localWorkSize)
         {
-            return ExecuteInternal(globalWorkSize, localWorkSize, null, null);
+            return ExecuteInternal(globalWorkSize, localWorkSize, Events.Empty, null);
         }
-        internal Event ExecuteInternal(IntPtr[] globalWorkSize, IntPtr[] localWorkSize, Event[] eventWaitList)
+        internal Event ExecuteInternal(SizeT[] globalWorkSize, SizeT[] localWorkSize, Events eventWaitList)
         {
             return ExecuteInternal(globalWorkSize, localWorkSize, eventWaitList, null);
         }
-        internal Event ExecuteInternal(IntPtr[] globalWorkSize, IntPtr[] localWorkSize, Event[] eventWaitList, IntPtr[] globalWorkOffset)
+        internal Event ExecuteInternal(SizeT[] globalWorkSize, SizeT[] localWorkSize, Events eventWaitList, SizeT[] globalWorkOffset)
         {
             if (localWorkSize == null || globalWorkSize.Length == localWorkSize.Length)
             {
-                Int32 openclEventWaitListLength;
-                OpenCLEvent[] openclEventWaitList;
+                CLEvent e = new CLEvent();
 
-                if (eventWaitList == null)
-                {
-                    openclEventWaitList = null;
-                    openclEventWaitListLength = 0;
-                }
-                else
-                {
-                    openclEventWaitList = new OpenCLEvent[eventWaitList.Length];
-                    openclEventWaitListLength = eventWaitList.Length;
-                }
-
-                OpenCLEvent e;
-
-                OpenCLError.Validate(OpenCLDriver.clEnqueueNDRangeKernel(CommandQueue.OpenCLCommandQueue, OpenCLKernel, globalWorkSize.Length, globalWorkOffset, globalWorkSize, localWorkSize, openclEventWaitListLength, openclEventWaitList, out e));
+                OpenCLError.Validate(OpenCLDriver.clEnqueueNDRangeKernel(CommandQueue.CLCommandQueue, CLKernel, globalWorkSize.Length, globalWorkOffset, globalWorkSize, localWorkSize, eventWaitList.Count, eventWaitList.OpenCLEventArray, ref e));
 
                 return new Event(e);
             }
@@ -124,15 +95,15 @@ namespace ManOCL
         {
             return ExecuteInternal(Convert(globalWorkSize), Convert(localWorkSize), null, Convert(globalWorkOffset));
         }
-        public Event Execute(Int32[] globalWorkSize, Int32[] localWorkSize, Int32[] globalWorkOffset, Event[] eventWaitList)
+        public Event Execute(Int32[] globalWorkSize, Int32[] localWorkSize, Int32[] globalWorkOffset, Events eventWaitList)
         {
             return ExecuteInternal(Convert(globalWorkSize), Convert(localWorkSize), eventWaitList, Convert(globalWorkOffset));
         }
-        public Event Execute(Int32[] globalWorkSize, Int32[] localWorkSize, Event[] eventWaitList)
+        public Event Execute(Int32[] globalWorkSize, Int32[] localWorkSize, Events eventWaitList)
         {
             return ExecuteInternal(Convert(globalWorkSize), Convert(localWorkSize), eventWaitList, null);
         }
-        public Event Execute(Int32[] globalWorkSize, Int32[] localWorkSize, Event[] eventWaitList, Int32[] globalWorkOffset)
+        public Event Execute(Int32[] globalWorkSize, Int32[] localWorkSize, Events eventWaitList, Int32[] globalWorkOffset)
         {
             return ExecuteInternal(Convert(globalWorkSize), Convert(localWorkSize), eventWaitList, Convert(globalWorkOffset));
         }
@@ -157,15 +128,15 @@ namespace ManOCL
         {
             return ExecuteInternal(Convert(globalWorkSize), Convert(localWorkSize), null, Convert(globalWorkOffset));
         }
-        public Event Execute(UInt32[] globalWorkSize, UInt32[] localWorkSize, UInt32[] globalWorkOffset, Event[] eventWaitList)
+        public Event Execute(UInt32[] globalWorkSize, UInt32[] localWorkSize, UInt32[] globalWorkOffset, Events eventWaitList)
         {
             return ExecuteInternal(Convert(globalWorkSize), Convert(localWorkSize), eventWaitList, Convert(globalWorkOffset));
         }
-        public Event Execute(UInt32[] globalWorkSize, UInt32[] localWorkSize, Event[] eventWaitList)
+        public Event Execute(UInt32[] globalWorkSize, UInt32[] localWorkSize, Events eventWaitList)
         {
             return ExecuteInternal(Convert(globalWorkSize), Convert(localWorkSize), eventWaitList, null);
         }
-        public Event Execute(UInt32[] globalWorkSize, UInt32[] localWorkSize, Event[] eventWaitList, UInt32[] globalWorkOffset)
+        public Event Execute(UInt32[] globalWorkSize, UInt32[] localWorkSize, Events eventWaitList, UInt32[] globalWorkOffset)
         {
             return ExecuteInternal(Convert(globalWorkSize), Convert(localWorkSize), eventWaitList, Convert(globalWorkOffset));
         }
@@ -190,15 +161,15 @@ namespace ManOCL
         {
             return ExecuteInternal(Convert(globalWorkSize), Convert(localWorkSize), null, Convert(globalWorkOffset));
         }
-        public Event Execute(Int64[] globalWorkSize, Int64[] localWorkSize, Int64[] globalWorkOffset, Event[] eventWaitList)
+        public Event Execute(Int64[] globalWorkSize, Int64[] localWorkSize, Int64[] globalWorkOffset, Events eventWaitList)
         {
             return ExecuteInternal(Convert(globalWorkSize), Convert(localWorkSize), eventWaitList, Convert(globalWorkOffset));
         }
-        public Event Execute(Int64[] globalWorkSize, Int64[] localWorkSize, Event[] eventWaitList)
+        public Event Execute(Int64[] globalWorkSize, Int64[] localWorkSize, Events eventWaitList)
         {
             return ExecuteInternal(Convert(globalWorkSize), Convert(localWorkSize), eventWaitList, null);
         }
-        public Event Execute(Int64[] globalWorkSize, Int64[] localWorkSize, Event[] eventWaitList, Int64[] globalWorkOffset)
+        public Event Execute(Int64[] globalWorkSize, Int64[] localWorkSize, Events eventWaitList, Int64[] globalWorkOffset)
         {
             return ExecuteInternal(Convert(globalWorkSize), Convert(localWorkSize), eventWaitList, Convert(globalWorkOffset));
         }
@@ -223,15 +194,15 @@ namespace ManOCL
         {
             return ExecuteInternal(Convert(globalWorkSize), Convert(localWorkSize), null, Convert(globalWorkOffset));
         }
-        public Event Execute(UInt64[] globalWorkSize, UInt64[] localWorkSize, UInt64[] globalWorkOffset, Event[] eventWaitList)
+        public Event Execute(UInt64[] globalWorkSize, UInt64[] localWorkSize, UInt64[] globalWorkOffset, Events eventWaitList)
         {
             return ExecuteInternal(Convert(globalWorkSize), Convert(localWorkSize), eventWaitList, Convert(globalWorkOffset));
         }
-        public Event Execute(UInt64[] globalWorkSize, UInt64[] localWorkSize, Event[] eventWaitList)
+        public Event Execute(UInt64[] globalWorkSize, UInt64[] localWorkSize, Events eventWaitList)
         {
             return ExecuteInternal(Convert(globalWorkSize), Convert(localWorkSize), eventWaitList, null);
         }
-        public Event Execute(UInt64[] globalWorkSize, UInt64[] localWorkSize, Event[] eventWaitList, UInt64[] globalWorkOffset)
+        public Event Execute(UInt64[] globalWorkSize, UInt64[] localWorkSize, Events eventWaitList, UInt64[] globalWorkOffset)
         {
             return ExecuteInternal(Convert(globalWorkSize), Convert(localWorkSize), eventWaitList, Convert(globalWorkOffset));
         }
@@ -243,7 +214,7 @@ namespace ManOCL
         public ReadOnlyIndexer<Argument> Arguments { get; private set; }
 
         /* Static members */
-        private static IntPtr[] Convert<T>(T[] data)
+        private static SizeT[] Convert<T>(T[] data)
         {
             if (data == null)
             {
@@ -253,39 +224,46 @@ namespace ManOCL
             {
                 Int32 structureSize = Marshal.SizeOf(typeof(T));
 
-                IntPtr[] result = new IntPtr[data.Length];
+                SizeT[] result = new SizeT[data.Length];
 
                 GCHandle handle = GCHandle.Alloc(data, GCHandleType.Pinned);
+				
+				try
+				{				
+	                IntPtr handlePtr = handle.AddrOfPinnedObject();
+	
+	                if (structureSize < IntPtr.Size)
+	                {
+	                    for (int i = 0; i < result.Length; i++)
+	                    {
+	                        byte[] bytes = new byte[4];
+	
+	                        for (int j = 0; j < structureSize; j++)
+	                        {
+	                            bytes[j] = Marshal.ReadByte(handlePtr, i * structureSize + j);
+	                        }
+	
+	                        result[i] = new SizeT(BitConverter.ToInt32(bytes, 0));
+	                    }
+	                }
+	                else
+	                {
+	                    for (int i = 0; i < result.Length; i++)
+	                    {
+	                        result[i] = new SizeT(Marshal.ReadIntPtr(handlePtr, structureSize * i).ToInt64());
+	                    }
+	                }
 
-                IntPtr handlePtr = handle.AddrOfPinnedObject();
-
-                if (structureSize < IntPtr.Size)
-                {
-                    for (int i = 0; i < result.Length; i++)
-                    {
-                        byte[] bytes = new byte[4];
-
-                        for (int j = 0; j < structureSize; j++)
-                        {
-                            bytes[j] = Marshal.ReadByte(handlePtr, i * structureSize + j);
-                        }
-
-                        result[i] = new IntPtr(BitConverter.ToInt32(bytes, 0));
-                    }
-                }
-                else
-                {
-                    for (int i = 0; i < result.Length; i++)
-                    {
-                        result[i] = Marshal.ReadIntPtr(handlePtr, structureSize * i);
-                    }
-                }
-
-                return result;
+					return result;
+				}
+				finally
+				{
+					handle.Free();
+				}
             }
         }
 
-        private static T GetKernelInfo<T>(OpenCLKernel openclKernel, KernelInfo kernelInfo)
+        private static T GetKernelInfo<T>(CLKernel openclKernel, CLKernelInfo kernelInfo)
         {
             Byte[] buffer = GetKernelInfoBuffer(openclKernel, kernelInfo, Marshal.SizeOf(typeof(T)));
 
@@ -301,7 +279,7 @@ namespace ManOCL
             }
         }
 
-        private static String GetKernelInfoString(OpenCLKernel openclKernel, KernelInfo kernelInfo, Int32 kernelInfoBufferSize)
+        private static String GetKernelInfoString(CLKernel openclKernel, CLKernelInfo kernelInfo, Int32 kernelInfoBufferSize)
         {
             byte[] buffer = GetKernelInfoBuffer(openclKernel, kernelInfo, kernelInfoBufferSize);
 
@@ -309,9 +287,9 @@ namespace ManOCL
 
             return System.Text.ASCIIEncoding.ASCII.GetString(buffer, 0, count < 0 ? buffer.Length : count);
         }
-        private static Byte[] GetKernelInfoBuffer(OpenCLKernel openclKernel, KernelInfo kernelInfo, Int32 kernelInfoBufferSize)
+        private static Byte[] GetKernelInfoBuffer(CLKernel openclKernel, CLKernelInfo kernelInfo, Int32 kernelInfoBufferSize)
         {
-            IntPtr bufferSize = IntPtr.Zero;
+            SizeT bufferSize = SizeT.Zero;
 
             Byte[] buffer = new Byte[kernelInfoBufferSize];
 
@@ -321,14 +299,14 @@ namespace ManOCL
 
             try
             {
-                OpenCLError.Validate(OpenCLDriver.clGetKernelInfo(openclKernel, kernelInfo, new IntPtr(buffer.Length), bufferPtr, out bufferSize));
+                OpenCLError.Validate(OpenCLDriver.clGetKernelInfo(openclKernel, kernelInfo, new SizeT(buffer.Length), bufferPtr, ref bufferSize));
             }
             finally
             {
                 bufferHandle.Free();
             }
 
-            Array.Resize(ref buffer, bufferSize.ToInt32());
+            Array.Resize(ref buffer, (int)bufferSize);
 
             return buffer;
         }
@@ -344,20 +322,20 @@ namespace ManOCL
 
         public static Kernel Create(String name, String[] sources, params Argument[] arguments)
         {
-            return Create(name, CommandQueue.Default, Program.Create(sources, Context.Default, Devices.Default, Program.DefaultBuildOptions), arguments);
+            return Create(name, CommandQueue.Default, Program.Create(sources, Context.Default, Context.Default.Devices, Program.DefaultBuildOptions), arguments);
         }
         public static Kernel Create(String name, String[] sources, String programBuildOptions, params Argument[] arguments)
         {
-            return Create(name, CommandQueue.Default, Program.Create(sources, Context.Default, Devices.Default, programBuildOptions), arguments);
+            return Create(name, CommandQueue.Default, Program.Create(sources, Context.Default, Context.Default.Devices, programBuildOptions), arguments);
         }
         
-        public static Kernel Create(String name, CommandQueue commandQueue, Program program, params Argument[] arguments)
+        public static Kernel Create(String name, CommandQueue commandQueue, Program sources, params Argument[] arguments)
         {
-            Error error;
+            CLError error = CLError.None;
 
-            OpenCLKernel openclKernel = OpenCLDriver.clCreateKernel(program.OpenCLProgram, name, out error);
+            CLKernel openclKernel = OpenCLDriver.clCreateKernel(sources.CLProgram, name, ref error);
 
-            Kernel result = new Kernel(openclKernel, program, commandQueue, name.Length + 1);
+            Kernel result = new Kernel(openclKernel, sources, commandQueue, name.Length + 1);
 
             result.InitializeArguments(arguments);
 
@@ -369,7 +347,7 @@ namespace ManOCL
         {
             if (!disposed)
             {
-                OpenCLError.Validate(OpenCLDriver.clReleaseKernel(OpenCLKernel));
+                OpenCLError.Validate(OpenCLDriver.clReleaseKernel(CLKernel));
 
                 disposed = false;
             }
@@ -378,11 +356,11 @@ namespace ManOCL
         /* Operators & miscellaneous members */
         public override Int32 GetHashCode()
         {
-            return OpenCLKernel.GetHashCode();
+            return CLKernel.GetHashCode();
         }
         public override Boolean Equals(object obj)
         {
-            return obj is Kernel && Object.Equals(((Kernel)(obj)).OpenCLKernel, OpenCLKernel);
+            return obj is Kernel && Object.Equals(((Kernel)(obj)).CLKernel, CLKernel);
         }
 
         public static Boolean operator ==(Kernel kernelA, Kernel kernelB)
@@ -393,7 +371,7 @@ namespace ManOCL
             }
             else
             {
-                return Object.Equals(kernelA.OpenCLKernel, kernelB.OpenCLKernel);
+                return Object.Equals(kernelA.CLKernel, kernelB.CLKernel);
             }
         }
         public static Boolean operator !=(Kernel kernelA, Kernel kernelB)
@@ -404,7 +382,7 @@ namespace ManOCL
             }
             else
             {
-                return !Object.Equals(kernelA.OpenCLKernel, kernelB.OpenCLKernel);
+                return !Object.Equals(kernelA.CLKernel, kernelB.CLKernel);
             }
         }
     }

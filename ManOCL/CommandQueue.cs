@@ -2,50 +2,50 @@
 using System.Collections.Generic;
 using System.Text;
 
+using ManOCL.Internal.OpenCL;
+
 namespace ManOCL
 {
-    using Native;
-
     public class CommandQueue
     {
         private Boolean disposed;
 
-        internal CommandQueue(OpenCLCommandQueue openclCommandQueue, Context context, Device device, CommandQueueProperties commandQueueProperties)
+        internal CommandQueue(CLCommandQueue openclCommandQueue, Context context, Device device, CommandQueueProperties commandQueueProperties)
         {
             this.Device = device;
             this.Context = context;
-            this.OpenCLCommandQueue = openclCommandQueue;
-            this.CommandQueueProperties = commandQueueProperties;
+            this.CLCommandQueue = openclCommandQueue;
+            this.CLCommandQueueProperties = commandQueueProperties;
         }
 
-        internal OpenCLCommandQueue OpenCLCommandQueue { get; private set; }
+        internal CLCommandQueue CLCommandQueue { get; private set; }
 
         public const CommandQueueProperties DefaultProperties = CommandQueueProperties.ProfilingEnable;
 
         public static CommandQueue Create(Context context, Device device, CommandQueueProperties commandQueueProperties)
         {
-            Error error;
+            CLError error = CLError.None;
 
-            OpenCLCommandQueue openclCommandQueue = OpenCLDriver.clCreateCommandQueue(context.OpenCLContext, device.OpenCLDevice, commandQueueProperties, out error);
+            CLCommandQueue openclCommandQueue = OpenCLDriver.clCreateCommandQueue(context.CLContext, device.CLDeviceID, (ManOCL.Internal.OpenCL.CLCommandQueueProperties)commandQueueProperties, ref error);
 
             OpenCLError.Validate(error);
 
             return new CommandQueue(openclCommandQueue, context, device, commandQueueProperties);
         }
 
-        public static CommandQueue CreateDefault()
+        public static CommandQueue Create()
         {
             return Create(Context.Default, Device.Default, CommandQueue.DefaultProperties);
         }
-        public static CommandQueue CreateDefault(CommandQueueProperties commandQueueProperties)
+        public static CommandQueue Create(CommandQueueProperties commandQueueProperties)
         {
             return Create(Context.Default, Device.Default, commandQueueProperties);
         }
-        public static CommandQueue CreateDefault(Device device)
+        public static CommandQueue Create(Device device)
         {
             return Create(Context.Default, device, CommandQueue.DefaultProperties);
         }
-        public static CommandQueue CreateDefault(Device device, CommandQueueProperties commandQueueProperties)
+        public static CommandQueue Create(Device device, CommandQueueProperties commandQueueProperties)
         {
             return Create(Context.Default, device, commandQueueProperties);
         }
@@ -58,29 +58,33 @@ namespace ManOCL
             {
                 if (_Default == default(CommandQueue))
                 {
-                    _Default = CommandQueue.CreateDefault();
+                    _Default = CommandQueue.Create();
                 }
 
                 return _Default;
             }
+			set
+			{
+				_Default = value;
+			}
         }
         #endregion
 
         public Device Device { get; private set; }
         public Context Context { get; private set; }
 
-        public CommandQueueProperties CommandQueueProperties { get; private set; }
+        public CommandQueueProperties CLCommandQueueProperties { get; private set; }
 
         public void Finish()
         {
-            OpenCLError.Validate(OpenCLDriver.clFinish(OpenCLCommandQueue));
+            OpenCLError.Validate(OpenCLDriver.clFinish(CLCommandQueue));
         }
 
         ~CommandQueue()
         {
             if (!disposed)
             {
-                OpenCLError.Validate(OpenCLDriver.clReleaseCommandQueue(OpenCLCommandQueue));
+                OpenCLError.Validate(OpenCLDriver.clReleaseCommandQueue(CLCommandQueue));
 
                 disposed = true;
             }

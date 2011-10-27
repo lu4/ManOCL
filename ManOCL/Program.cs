@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
-using ManOCL.Native;
+using ManOCL.Internal.OpenCL;
+using ManOCL.Internal;
+
 
 namespace ManOCL
 {
@@ -10,14 +12,14 @@ namespace ManOCL
     {
         public const String DefaultBuildOptions = "";
 
-        internal OpenCLProgram OpenCLProgram { get; private set; }
+        internal CLProgram CLProgram { get; private set; }
 
-        internal Program(OpenCLProgram openclProgram, String[] sources, Context context, Devices devices, String buildOptions)
+        internal Program(CLProgram openclProgram, String[] sources, Context context, Devices devices, String buildOptions)
         {
             this.Context = context;
 			this.Devices = devices;
             this.BuildOptions = buildOptions;
-            this.OpenCLProgram = openclProgram;
+            this.CLProgram = openclProgram;
             this.Sources = new ReadOnlyIndexer<String>(sources);
         }
 
@@ -30,13 +32,13 @@ namespace ManOCL
 
         /* Static methods */
 
-        private static IntPtr[] GetLengths(String[] sources)
+        private static SizeT[] GetLengths(String[] sources)
         {
-            IntPtr[] result = new IntPtr[sources.Length];
+            SizeT[] result = new SizeT[sources.Length];
 
             for (int i = 0; i < result.Length; i++)
             {
-                result[i] = new IntPtr(sources[0].Length);
+                result[i] = new SizeT(sources[0].Length);
             }
 
             return result;
@@ -44,7 +46,7 @@ namespace ManOCL
 
         public static Program Create(String[] sources                                       , String buildOptions)
         {
-            return Create(sources, Context.Default, Devices.Default, buildOptions);
+            return Create(sources, Context.Default, Context.Default.Devices, buildOptions);
         }
         public static Program Create(String[] sources, Devices devices                      , String buildOptions)
         {
@@ -52,13 +54,13 @@ namespace ManOCL
         }
         public static Program Create(String[] sources, Context context                      , String buildOptions)
         {
-            return Create(sources, context, Devices.Default, buildOptions);
+            return Create(sources, context, context.Devices, buildOptions);
         }
         public static Program Create(String[] sources, Context context, Devices devices     , String buildOptions)
         {
-            Error error;
+            CLError error = CLError.None;
 
-            OpenCLProgram openclProgram = OpenCLDriver.clCreateProgramWithSource(context.OpenCLContext, sources.Length, sources, GetLengths(sources), out error);
+            CLProgram openclProgram = OpenCLDriver.clCreateProgramWithSource(context.CLContext, sources.Length, sources, GetLengths(sources), ref error);
 
             OpenCLError.Validate(error);
 
@@ -121,7 +123,7 @@ namespace ManOCL
 
         internal AsyncHelper AsyncHelperObject { get; private set; }
 
-        private void AsyncCallback(OpenCLProgram program, IntPtr user_data)
+        private void AsyncCallback(CLProgram program, IntPtr user_data)
         {
             AsyncHelperObject.Callback();
 
@@ -130,7 +132,7 @@ namespace ManOCL
 
         public static void CreateAsync(CreateCallback createCallback, String source, String buildOptions)
         {
-            CreateAsync(createCallback, new String[] { source }, Devices.Default, Context.Default, buildOptions);
+            CreateAsync(createCallback, new String[] { source }, Context.Default.Devices, Context.Default, buildOptions);
         }
         public static void CreateAsync(CreateCallback createCallback, String source, Devices devices, String buildOptions)
         {
@@ -143,7 +145,7 @@ namespace ManOCL
 
         public static void CreateAsync(CreateCallback createCallback, String[] sources, String buildOptions)
         {
-            CreateAsync(createCallback, sources, Devices.Default, Context.Default, buildOptions);
+            CreateAsync(createCallback, sources, Context.Default.Devices, Context.Default, buildOptions);
         }
         public static void CreateAsync(CreateCallback createCallback, String[] sources, Devices devices, String buildOptions)
         {
@@ -151,9 +153,9 @@ namespace ManOCL
         }
         public static void CreateAsync(CreateCallback createCallback, String[] sources, Devices devices, Context context, String buildOptions)
         {
-            Error error;
+            CLError error = CLError.None;
 
-            OpenCLProgram openclProgram = OpenCLDriver.clCreateProgramWithSource(context.OpenCLContext, sources.Length, sources, GetLengths(sources), out error);
+            CLProgram openclProgram = OpenCLDriver.clCreateProgramWithSource(context.CLContext, sources.Length, sources, GetLengths(sources), ref error);
 
             OpenCLError.Validate(error);
 
@@ -167,7 +169,7 @@ namespace ManOCL
 
         public static void CreateAsync<T>(CreateCallback<T> createCallback, T userData, String source, String buildOptions)
         {
-            CreateAsync<T>(createCallback, userData, new String[] { source }, Devices.Default, Context.Default, buildOptions);
+            CreateAsync<T>(createCallback, userData, new String[] { source }, Context.Default.Devices, Context.Default, buildOptions);
         }
         public static void CreateAsync<T>(CreateCallback<T> createCallback, T userData, String source, Devices devices, String buildOptions)
         {
@@ -180,7 +182,7 @@ namespace ManOCL
 
         public static void CreateAsync<T>(CreateCallback<T> createCallback, T userData, String[] sources, String buildOptions)
         {
-            CreateAsync<T>(createCallback, userData, sources, Devices.Default, Context.Default, buildOptions);
+            CreateAsync<T>(createCallback, userData, sources, Context.Default.Devices, Context.Default, buildOptions);
         }
         public static void CreateAsync<T>(CreateCallback<T> createCallback, T userData, String[] sources, Devices devices, String buildOptions)
         {
@@ -188,9 +190,9 @@ namespace ManOCL
         }
         public static void CreateAsync<T>(CreateCallback<T> createCallback, T userData, String[] sources, Devices devices, Context context, String buildOptions)
         {
-            Error error;
+            CLError error = CLError.None;
 
-            OpenCLProgram openclProgram = OpenCLDriver.clCreateProgramWithSource(context.OpenCLContext, sources.Length, sources, GetLengths(sources), out error);
+            CLProgram openclProgram = OpenCLDriver.clCreateProgramWithSource(context.CLContext, sources.Length, sources, GetLengths(sources), ref error);
 
             OpenCLError.Validate(error);
 

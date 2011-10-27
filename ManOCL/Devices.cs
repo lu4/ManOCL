@@ -1,50 +1,51 @@
 ﻿using System;
+using System.Text;
 using System.Collections;
 using System.Collections.Generic;
 
-using ManOCL.Native;
+using ManOCL.Internal.OpenCL;
 
 namespace ManOCL
 {
 	public partial class Devices : IEnumerable<Device>
 	{
-        public const Int32 DefaultCount = 32;
-
         // General
 
         internal Device[] DeviceArray { get; private set; }
-        internal OpenCLDevice[] OpenCLDeviceArray { get; private set; }
+        internal CLDeviceID[] OpenCLDeviceArray { get; private set; }
 
-        protected static Device[] GetDeviceArray(OpenCLDevice[] ids, Int32 deviceInfoBufferSize)
+        internal static Device[] GetDeviceArray(CLDeviceID[] ids)
         {
             Device[] devices = new Device[ids.Length];
 
             for (int i = 0; i < devices.Length; i++)
             {
-                devices[i] = new Device(ids[i], deviceInfoBufferSize);
+                devices[i] = new Device(ids[i]);
             }
 
             return devices;
         }
-        protected static OpenCLDevice[] GetOpenCLDeviceArray(Device[] devices)
+
+        internal static CLDeviceID[] GetOpenCLDeviceArray(Device[] devices)
         {
-            OpenCLDevice[] openclDevices = new OpenCLDevice[devices.Length];
+            CLDeviceID[] openclDevices = new CLDeviceID[devices.Length];
 
             for (UInt32 i = 0; i < devices.Length; i++)
             {
-                openclDevices[i] = devices[i].OpenCLDevice;
+                openclDevices[i] = devices[i].CLDeviceID;
             }
 
             return openclDevices;
         }
 
-        internal Devices(OpenCLDevice[] ids, Device[] devices)
+        internal Devices(CLDeviceID[] ids, Device[] devices)
         {
             this.DeviceArray = devices;
             this.OpenCLDeviceArray = ids;
         }
-        internal Devices(OpenCLDevice[] ids, Int32 deviceInfoBufferSize)
-            : this(ids, GetDeviceArray(ids, deviceInfoBufferSize))
+        
+        internal Devices(CLDeviceID[] ids)
+            : this(ids, GetDeviceArray(ids))
         {
         }
 
@@ -70,57 +71,35 @@ namespace ManOCL
 
         // Statics
 
-        #region public static Devices Default { get; } /* Singleton */
-        private static Devices _Default;
-        public static Devices Default
+		public static Devices Create()
+		{
+			return Create(CLDeviceType.All, Context.Default.Platforms);
+		}
+        public static Devices Create(CLDeviceType deviceType)
         {
-            get
-            {
-                if (_Default == default(Devices))
-                {
-                    _Default = Devices.Create(Platforms.Default, Device.DefaultDeviceType, Devices.DefaultCount, Device.DefaultInfoBufferSize);
-                }
-
-                return _Default;
-            }
+            return Create(deviceType, Context.Default.Platforms);
         }
-        #endregion
-
-        public static Devices Create(DeviceType deviceType)
+        public static Devices Create(CLDeviceType deviceType, Platform platform)
         {
-            return Create(Platforms.Default, deviceType, DefaultCount, Device.DefaultInfoBufferSize);
-        }
-        public static Devices Create(DeviceType deviceType, Int32 deviceCount, Int32 deviceInfoBufferSize)
-        {
-            return Create(Platforms.Default, deviceType, deviceCount, deviceInfoBufferSize);
-        }
-        public static Devices Create(Platform platform, DeviceType deviceType)
-        {
-            return Create(platform, deviceType, DefaultCount, Device.DefaultInfoBufferSize);
-        }
-        public static Devices Create(Platform platform, DeviceType deviceType, Int32 deviceCount, Int32 deviceInfoBufferSize)
-        {
-            Int32 realDeviceCount;
+            Int32 deviceCount = 0;
 
-            OpenCLDevice[] deviceIds = new OpenCLDevice[deviceCount];
+            CLPlatformID pfm = platform == null ? new CLPlatformID() : platform.CLPlatformID;
 
-            OpenCLError.Validate(OpenCLDriver.clGetDeviceIDs(platform == null ? OpenCLPlatform.None : platform.OpenCLPlatform, deviceType, deviceCount, deviceIds, out realDeviceCount));
+            OpenCLError.Validate(OpenCLDriver.clGetDeviceIDs(pfm, (ManOCL.Internal.OpenCL.CLDeviceType)deviceType, 0, null, ref deviceCount));
 
-            Array.Resize(ref deviceIds, realDeviceCount);
+            CLDeviceID[] deviceIds = new CLDeviceID[deviceCount];
 
-            return new Devices(deviceIds, deviceInfoBufferSize);
+            OpenCLError.Validate(OpenCLDriver.clGetDeviceIDs(pfm, (ManOCL.Internal.OpenCL.CLDeviceType)deviceType, deviceCount, deviceIds, ref deviceCount));
+
+            return new Devices(deviceIds);
         }
-        public static Devices Create(Platforms platforms, DeviceType deviceType)
-        {
-            return Create(platforms, deviceType, DefaultCount, Device.DefaultInfoBufferSize);
-        }
-        public static Devices Create(Platforms platforms, DeviceType deviceType, Int32 deviceCount, Int32 deviceInfoBufferSize)
+        public static Devices Create(CLDeviceType deviceType, Platforms platforms)
         {
             List<Device> rd = new List<Device>();
 
             foreach (Platform platform in platforms)
             {
-                Devices devices = Devices.Create(platform, deviceType, deviceCount, deviceInfoBufferSize);
+                Devices devices = Devices.Create(deviceType, platform);
 
                 foreach (Device device in devices)
                 {
@@ -129,7 +108,7 @@ namespace ManOCL
             }
 
             Device[] resultingDevices = rd.ToArray();
-            OpenCLDevice[] resultingOpenCLDevices = GetOpenCLDeviceArray(resultingDevices);
+            CLDeviceID[] resultingOpenCLDevices = GetOpenCLDeviceArray(resultingDevices);
 
             return new Devices(resultingOpenCLDevices, resultingDevices);
         }
@@ -144,6 +123,30 @@ namespace ManOCL
             }
         }
 
+		internal String ToIdentedString(Int32 ident, Int32 identSize)
+		{
+			String identation = new String(' ', identSize * ident);
+
+			StringBuilder sb = new StringBuilder();
+			
+			sb.AppendLine(identation +  "Platforms");
+			sb.AppendLine(identation + "{");
+			
+			foreach (Device device in DeviceArray)
+			{
+				sb.AppendLine(device.ToIdentedString(ident + 1, identSize));
+			}
+			
+			sb.AppendLine(identation + "}");
+			
+			return sb.ToString();			
+		}
+		
+		public override string ToString ()
+		{
+			return ToIdentedString(0, Globals.IdentSize);
+		}
+		
         IEnumerator IEnumerable.GetEnumerator()
         {
             foreach (Device device in DeviceArray)

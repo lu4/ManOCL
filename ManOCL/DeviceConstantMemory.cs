@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using ManOCL.Native;
+using ManOCL.Internal.OpenCL;
 using System.Runtime.InteropServices;
+using ManOCL.Internal;
+
 
 namespace ManOCL
 {
@@ -10,11 +12,11 @@ namespace ManOCL
     {
         public static DeviceConstantMemory CreateWithSize(Int32 sizeInBytes)
         {
-            return CreateInternal<Array>(null, new IntPtr(sizeInBytes), MemFlags.ReadOnly, Context.Default, DeviceBufferAccess.Read);
+            return CreateInternal<Array>(null, new SizeT(sizeInBytes), CLMemFlags.ReadOnly, Context.Default, DeviceBufferAccess.Read);
         }
         public static DeviceConstantMemory CreateWithSize(Context context, Int32 sizeInBytes)
         {
-            return CreateInternal<Array>(null, new IntPtr(sizeInBytes), MemFlags.ReadOnly, context, DeviceBufferAccess.Read);
+            return CreateInternal<Array>(null, new SizeT(sizeInBytes), CLMemFlags.ReadOnly, context, DeviceBufferAccess.Read);
         }
 
         public static DeviceConstantMemory CreateWithArray(Array data)
@@ -23,7 +25,7 @@ namespace ManOCL
         }
         public static DeviceConstantMemory CreateWithArray(Context context, Array data)
         {
-            return CreateInternal(data, new IntPtr(Marshal.SizeOf(data.GetType().GetElementType()) * data.Length), MemFlags.ReadOnly | MemFlags.CopyHostPtr, context, DeviceBufferAccess.Read);
+            return CreateInternal(data, new SizeT(Marshal.SizeOf(data.GetType().GetElementType()) * data.Length), CLMemFlags.ReadOnly | CLMemFlags.CopyHostPtr, context, DeviceBufferAccess.Read);
         }
 
         public static DeviceConstantMemory CreateWithArray<T>(T data) where T : struct
@@ -32,7 +34,7 @@ namespace ManOCL
         }
         public static DeviceConstantMemory CreateWithArray<T>(Context context, T data) where T : struct
         {
-            return CreateInternal(data, new IntPtr(Marshal.SizeOf(data.GetType())), MemFlags.ReadOnly | MemFlags.CopyHostPtr, context, DeviceBufferAccess.Read);
+            return CreateInternal(data, new SizeT(Marshal.SizeOf(data.GetType())), CLMemFlags.ReadOnly | CLMemFlags.CopyHostPtr, context, DeviceBufferAccess.Read);
         }
     }
 }

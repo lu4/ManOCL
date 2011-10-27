@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Runtime.InteropServices;
-using ManOCL.Native;
+using ManOCL.Internal.OpenCL;
 
 namespace ManOCL
 {
@@ -15,11 +15,11 @@ namespace ManOCL
             this.size = size;
         }
 
-        internal override IntPtr IntPtr
+        internal IntPtr IntPtr
         {
             get { return IntPtr.Zero; }
         }
-        internal override IntPtr IntPtrSize
+        internal IntPtr IntPtrSize
         {
             get { throw new NotImplementedException(); }
         }
@@ -32,5 +32,10 @@ namespace ManOCL
         {
             return new DeviceLocalMemory(new IntPtr(bytes));
         }
+		
+		internal override void SetAsKernelArgument (CLKernel kernel, int index)
+		{
+			throw new NotImplementedException ();
+		}
     }
 }

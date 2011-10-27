@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using ManOCL.Native;
+using ManOCL.Internal.OpenCL;
 using System.Runtime.InteropServices;
+using ManOCL.Internal;
+
 
 namespace ManOCL
 {
@@ -12,19 +14,19 @@ namespace ManOCL
 
         public static HostMemory Create(Int32 sizeInBytes)
         {
-            return CreateInternal<Array>(null, new IntPtr(sizeInBytes), GetMemFlags(DefaultAccess) | MemFlags.AllocHostPtr, Context.Default, DefaultAccess);
+            return CreateInternal<Array>(null, new SizeT(sizeInBytes), GetMemFlags(DefaultAccess) | CLMemFlags.AllocHostPtr, Context.Default, DefaultAccess);
         }
         public static HostMemory Create(Int32 sizeInBytes, DeviceBufferAccess access)
         {
-            return CreateInternal<Array>(null, new IntPtr(sizeInBytes), GetMemFlags(DefaultAccess) | MemFlags.AllocHostPtr, Context.Default, DefaultAccess);
+            return CreateInternal<Array>(null, new SizeT(sizeInBytes), GetMemFlags(DefaultAccess) | CLMemFlags.AllocHostPtr, Context.Default, DefaultAccess);
         }
         public static HostMemory Create(Context context, Int32 sizeInBytes)
         {
-            return CreateInternal<Array>(null, new IntPtr(sizeInBytes), GetMemFlags(DefaultAccess) | MemFlags.AllocHostPtr, context, DefaultAccess);
+            return CreateInternal<Array>(null, new SizeT(sizeInBytes), GetMemFlags(DefaultAccess) | CLMemFlags.AllocHostPtr, context, DefaultAccess);
         }
         public static HostMemory Create(Context context, Int32 sizeInBytes, DeviceBufferAccess access)
         {
-            return CreateInternal<Array>(null, new IntPtr(sizeInBytes), GetMemFlags(access) | MemFlags.AllocHostPtr, context, access);
+            return CreateInternal<Array>(null, new SizeT(sizeInBytes), GetMemFlags(access) | CLMemFlags.AllocHostPtr, context, access);
         }
 
         public static HostMemory Create(Array data)
@@ -37,11 +39,11 @@ namespace ManOCL
         }
         public static HostMemory Create(Context context, Array data)
         {
-            return CreateInternal(data, new IntPtr(Marshal.SizeOf(data.GetType().GetElementType()) * data.Length), GetMemFlags(DefaultAccess) | MemFlags.AllocHostPtr | MemFlags.CopyHostPtr, context, DefaultAccess);
+            return CreateInternal(data, new SizeT(Marshal.SizeOf(data.GetType().GetElementType()) * data.Length), GetMemFlags(DefaultAccess) | CLMemFlags.AllocHostPtr | CLMemFlags.CopyHostPtr, context, DefaultAccess);
         }
         public static HostMemory Create(Context context, Array data, DeviceBufferAccess access)
         {
-            return CreateInternal(data, new IntPtr(Marshal.SizeOf(data.GetType().GetElementType()) * data.Length), GetMemFlags(access) | MemFlags.AllocHostPtr | MemFlags.CopyHostPtr, context, access);
+            return CreateInternal(data, new SizeT(Marshal.SizeOf(data.GetType().GetElementType()) * data.Length), GetMemFlags(access) | CLMemFlags.AllocHostPtr | CLMemFlags.CopyHostPtr, context, access);
         }
 
         public static HostMemory Create<T>(T data) where T : struct
@@ -54,11 +56,11 @@ namespace ManOCL
         }
         public static HostMemory Create<T>(Context context, T data) where T : struct
         {
-            return CreateInternal(data, new IntPtr(Marshal.SizeOf(data.GetType())), GetMemFlags(DefaultAccess) | MemFlags.AllocHostPtr | MemFlags.CopyHostPtr, context, DefaultAccess);
+            return CreateInternal(data, new SizeT(Marshal.SizeOf(data.GetType())), GetMemFlags(DefaultAccess) | CLMemFlags.AllocHostPtr | CLMemFlags.CopyHostPtr, context, DefaultAccess);
         }
         public static HostMemory Create<T>(Context context, T data, DeviceBufferAccess access) where T : struct
         {
-            return CreateInternal(data, new IntPtr(Marshal.SizeOf(data.GetType())), GetMemFlags(access) | MemFlags.AllocHostPtr | MemFlags.CopyHostPtr, context, access);
+            return CreateInternal(data, new SizeT(Marshal.SizeOf(data.GetType())), GetMemFlags(access) | CLMemFlags.AllocHostPtr | CLMemFlags.CopyHostPtr, context, access);
         }
 
         public static implicit operator HostMemory(Array array)

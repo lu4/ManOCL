@@ -1,0 +1,21 @@
+Z:\Projects\Estimator\ManOCL\ManOCL\obj\Debug\ResolveAssemblyReference.cache
+Z:\Projects\Estimator\ManOCL\ManOCL\obj\Debug\ManOCL.Resources.resources
+Z:\Projects\Estimator\ManOCL\ManOCL\obj\Debug\GenerateResource-ResGen.read.1.tlog
+Z:\Projects\Estimator\ManOCL\ManOCL\obj\Debug\GenerateResource-ResGen.write.1.tlog
+Z:\Projects\Estimator\ManOCL\ManOCL\bin\Debug\ManOCL.dll.config
+Z:\Projects\Estimator\ManOCL\ManOCL\bin\Debug\ManOCL.dll
+Z:\Projects\Estimator\ManOCL\ManOCL\bin\Debug\ManOCL.pdb
+Z:\Projects\Estimator\ManOCL\ManOCL\obj\Debug\ManOCL.dll
+Z:\Projects\Estimator\ManOCL\ManOCL\obj\Debug\ManOCL.pdb
+Z:\Projects\Estimator\ManOCL\ManOCL\bin\Debug\OpenCL.NET.dll
+Z:\Projects\Estimator\ManOCL\ManOCL\bin\Debug\OpenCL.NET.pdb
+Z:\Projects\Estimator\ManOCL\ManOCL\bin\Debug\OpenCL.NET.dll.config
+C:\Users\Lu4\Documents\Visual Studio 2010\Projects\ManOCL\ManOCL\obj\Debug\ResolveAssemblyReference.cache
+C:\Users\Lu4\Documents\Visual Studio 2010\Projects\ManOCL\ManOCL\obj\Debug\ManOCL.Resources.resources
+C:\Users\Lu4\Documents\Visual Studio 2010\Projects\ManOCL\ManOCL\obj\Debug\GenerateResource-ResGen.read.1.tlog
+C:\Users\Lu4\Documents\Visual Studio 2010\Projects\ManOCL\ManOCL\obj\Debug\GenerateResource-ResGen.write.1.tlog
+C:\Users\Lu4\Documents\Visual Studio 2010\Projects\ManOCL\ManOCL\obj\Debug\ManOCL.pdb
+C:\Users\Lu4\Documents\Visual Studio 2010\Projects\ManOCL\ManOCL\bin\Debug\ManOCL.dll.config
+C:\Users\Lu4\Documents\Visual Studio 2010\Projects\ManOCL\ManOCL\bin\Debug\ManOCL.dll
+C:\Users\Lu4\Documents\Visual Studio 2010\Projects\ManOCL\ManOCL\bin\Debug\ManOCL.pdb
+C:\Users\Lu4\Documents\Visual Studio 2010\Projects\ManOCL\ManOCL\obj\Debug\ManOCL.dll

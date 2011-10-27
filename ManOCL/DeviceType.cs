@@ -2,7 +2,7 @@
 
 namespace ManOCL
 {
-    public enum DeviceType : ulong
+    public enum CLDeviceType : ulong
     {
         Default = 1L,
         CPU = 2L,

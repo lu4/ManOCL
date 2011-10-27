@@ -1,39 +1,46 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using ManOCL.Native;
+using System.Runtime.InteropServices;
+using ManOCL.Internal;
+using ManOCL.Internal.OpenCL;
+
 
 namespace ManOCL
 {
     public class Profiler
     {
-        private static Int64 GetInfo(Event e, ProfilingInfo info)
+        private static Int64 GetInfo(Event e, CLProfilingInfo info)
         {
             Byte[] bytes = new Byte[8];
 
-            IntPtr paramValueSizeRet;
+            SizeT paramValueSizeRet = SizeT.Zero;
 
-            OpenCLError.Validate(OpenCLDriver.clGetEventProfilingInfo(e.OpenCLEvent, info, new IntPtr(bytes.Length), bytes, out paramValueSizeRet));
+            GCHandle bytesHandle = GCHandle.Alloc(bytes, GCHandleType.Pinned);
+            {
+                OpenCLError.Validate(OpenCLDriver.clGetEventProfilingInfo(e.CLEvent, info, new SizeT(bytes.LongLength), bytesHandle.AddrOfPinnedObject(), ref paramValueSizeRet));
+            }
+            bytesHandle.Free();
 
             return BitConverter.ToInt64(bytes, 0);
         }
 
         public static Int64 SubmitTick(Event e)
         {
-            return GetInfo(e, ProfilingInfo.Submit);
+            return GetInfo(e, CLProfilingInfo.Submit);
         }
         public static Int64 QueuedTick(Event e)
         {
-            return GetInfo(e, ProfilingInfo.Queued);
+            return GetInfo(e, CLProfilingInfo.Queued);
         }
 
         public static Int64 StartTick(Event e)
         {
-            return GetInfo(e, ProfilingInfo.Start);
+            return GetInfo(e, CLProfilingInfo.Start);
         }
         public static Int64 EndTick(Event e)
         {
-            return GetInfo(e, ProfilingInfo.End);
+            return GetInfo(e, CLProfilingInfo.End);
         }
         public static Int64 DurationTicks(Event e)
         {

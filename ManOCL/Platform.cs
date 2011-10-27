@@ -1,12 +1,12 @@
 ﻿using System;
-using ManOCL.Native;
+using ManOCL.Internal.OpenCL;
+using ManOCL.Internal;
+
 
 namespace ManOCL
 {
     public partial class Platform
     {
-        public const Int32 DefaultInfoBufferSize = 256;
-
         private Platform()
         {
             this.Name = "None";
@@ -16,18 +16,18 @@ namespace ManOCL
             this.Extensions = "None";
         }
 
-        internal Platform(OpenCLPlatform openclPlatform, Int32 platformInfoBufferSize)
+        internal Platform(CLPlatformID openclPlatform)
         {
-            this.OpenCLPlatform = openclPlatform;
+            this.CLPlatformID = openclPlatform;
 
-            this.Name = GetPlatformInfo(this, PlatformInfo.Name, platformInfoBufferSize);
-            this.Vendor = GetPlatformInfo(this, PlatformInfo.Vender, platformInfoBufferSize);
-            this.Profile = GetPlatformInfo(this, PlatformInfo.Profile, platformInfoBufferSize);
-            this.Version = GetPlatformInfo(this, PlatformInfo.Version, platformInfoBufferSize);
-            this.Extensions = GetPlatformInfo(this, PlatformInfo.Extensions, platformInfoBufferSize);
+            this.Name = GetPlatformInfo(this, CLPlatformInfo.Name);
+            this.Vendor = GetPlatformInfo(this, CLPlatformInfo.Vendor);
+            this.Profile = GetPlatformInfo(this, CLPlatformInfo.Profile);
+            this.Version = GetPlatformInfo(this, CLPlatformInfo.Version);
+            this.Extensions = GetPlatformInfo(this, CLPlatformInfo.Extensions);
         }
 
-        internal OpenCLPlatform OpenCLPlatform { get; private set; }
+        internal CLPlatformID CLPlatformID { get; private set; }
 
         public String Name { get; private set; }
         public String Vendor { get; private set; }
@@ -35,54 +35,57 @@ namespace ManOCL
         public String Version { get; private set; }
         public String Extensions { get; private set; }
 
-        #region public static Platform Default { get; } /* Singleton */
-        private static Platform _Default;
-        public static Platform Default
+        private static String GetPlatformInfo(Platform platform, CLPlatformInfo platformInfo)
         {
-            get
-            {
-                if (_Default == default(Platform))
-                {
-                    _Default = Platforms.Default[0];
-                }
-
-                return _Default;
-            }
-        }
-        #endregion
-
-        private static String GetPlatformInfo(Platform platform, PlatformInfo platformInfo, Int32 queryBufferSize)
-        {
-            if (platform.OpenCLPlatform.Value == IntPtr.Zero)
+            if (platform.CLPlatformID.Value == IntPtr.Zero)
             {
                 return "None";
             }
             else
             {
-                IntPtr buffer_size = IntPtr.Zero;
+                SizeT buffer_size = SizeT.Zero;
 
-                byte[] buffer = new byte[queryBufferSize];
+                OpenCLError.Validate(OpenCLDriver.clGetPlatformInfo(platform.CLPlatformID, platformInfo, SizeT.Zero, null, ref buffer_size));
+                
+                Byte[] buffer = new Byte[(Int64)buffer_size];
 
-                OpenCLError.Validate(OpenCLDriver.clGetPlatformInfo(platform.OpenCLPlatform, platformInfo, new IntPtr(queryBufferSize), buffer, buffer_size));
+                OpenCLError.Validate(OpenCLDriver.clGetPlatformInfo(platform.CLPlatformID, platformInfo, buffer_size, buffer, ref buffer_size));
 
-                Int32 count = Array.IndexOf(buffer, 0);
+                Int32 count = Array.IndexOf<byte>(buffer, 0);
 
                 return System.Text.Encoding.ASCII.GetString(buffer, 0, count < 0 ? buffer.Length : count);
             }
         }
+		
+		internal String ToIdentedString(Int32 ident, Int32 identSize)
+		{
+			String identation = new String(' ', identSize * ident);
+			String additionalIndentation = new String(' ', identSize);
 
+			return String.Format(
+@"{5}Platform '{0}'
+{5}{7}
+{5}{6}Name = '{0}'
+{5}{6}Profile = '{1}'
+{5}{6}Vendor = '{2}'
+{5}{6}Version = '{3}'
+{5}{6}Extensions = '{4}'
+{5}{8}",
+			Name, Profile, Vendor, Version, Extensions, identation, additionalIndentation, '{', '}');
+		}
+		
         public override String ToString()
         {
-            return String.Format("Platform ('{0}'):\r\n\tName = '{0}'\r\n\tProfile = '{1}'\r\n\tVendor = '{2}'\r\n\tVersion = '{3}'\r\n\tExtensions = '{4}'", Name, Profile, Vendor, Version, Extensions);
+			return ToIdentedString(0, Globals.IdentSize);
         }
 
         public override Int32 GetHashCode()
         {
-            return OpenCLPlatform.GetHashCode();
+            return CLPlatformID.GetHashCode();
         }
         public override Boolean Equals(object obj)
         {
-            return obj is Platform && Object.Equals(((Platform)(obj)).OpenCLPlatform, OpenCLPlatform);
+            return obj is Platform && Object.Equals(((Platform)(obj)).CLPlatformID, CLPlatformID);
         }
 
         public static Boolean operator ==(Platform platformA, Platform platformB)
@@ -93,7 +96,7 @@ namespace ManOCL
             }
             else
             {
-                return Object.Equals(platformA.OpenCLPlatform, platformB.OpenCLPlatform);
+                return Object.Equals(platformA.CLPlatformID, platformB.CLPlatformID);
             }
         }
         public static Boolean operator !=(Platform platformA, Platform platformB)
@@ -104,7 +107,7 @@ namespace ManOCL
             }
             else
             {
-                return !Object.Equals(platformA.OpenCLPlatform, platformB.OpenCLPlatform);
+                return !Object.Equals(platformA.CLPlatformID, platformB.CLPlatformID);
             }
         }
     }
