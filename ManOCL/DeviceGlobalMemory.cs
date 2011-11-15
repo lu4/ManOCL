@@ -4,6 +4,8 @@ using System.Runtime.InteropServices;
 
 using ManOCL.Internal.OpenCL;
 using ManOCL.Internal;
+using System.Drawing;
+using System.Drawing.Imaging;
 
 
 namespace ManOCL
@@ -78,6 +80,20 @@ namespace ManOCL
         public static DeviceGlobalMemory CreateFromStructure<T>(T data, DeviceBufferAccess access, Context context) where T : struct
         {
             return CreateInternal(data, new SizeT(Marshal.SizeOf(data.GetType())), GetMemFlags(access) | CLMemFlags.CopyHostPtr, context, access);
+        }
+
+        public static DeviceGlobalMemory CreateFromBitmap(Bitmap bmp, Context context, DeviceBufferAccess access)
+        {
+            BitmapData bmpBits = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+
+            try
+            {
+                return CreateInternalFromHostPtr(new SizeT(bmpBits.Stride * bmpBits.Height), CLMemFlags.CopyHostPtr, context, access, bmpBits.Scan0);
+            }
+            finally
+            {
+                bmp.UnlockBits(bmpBits);
+            }
         }
 
         public static implicit operator DeviceGlobalMemory(Array array)

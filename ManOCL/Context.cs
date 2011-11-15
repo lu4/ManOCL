@@ -11,9 +11,9 @@ namespace ManOCL
     public partial class Context
     {
         private Boolean disposed;
-				
+
         private Context(CLContext openclContext, Platforms platforms, Devices devices)
-        {			
+        {
             this.Devices = devices;
             this.Platforms = platforms;
             this.CLContext = openclContext;
@@ -58,25 +58,52 @@ namespace ManOCL
             return new Context(openclContext, platforms, devices);
         }
 
-        public static Context ShareWithCGL(IntPtr cglShareGroup)
+        public static IntPtr ShareForMac(IntPtr cglShareGroup)
         {
-            IntPtr[] properties = 
-			{
-				new IntPtr(0x10000000), // CL_CONTEXT_PROPERTY_USE_CGL_SHAREGROUP_APPLE
-				cglShareGroup,
-				new IntPtr(0)
-			};
-
             CLError error = CLError.None;
+
+            IntPtr[] properties = 
+            {
+                new IntPtr(0x10000000), // CL_CONTEXT_PROPERTY_USE_CGL_SHAREGROUP_APPLE
+                cglShareGroup,
+                new IntPtr(0)
+            };
+
 
             // TODO: Add parameter pfn_notify (logging function)
             CLContext openclContext = OpenCLDriver.clCreateContext(properties, 0, null, null, IntPtr.Zero, ref error);
 
             OpenCLError.Validate(error);
+            
+            return openclContext.Value;
+        }
 
+        public static IntPtr ShareForWin(IntPtr wglContext, IntPtr currentDC)
+        {
+            //IntPtr[] properties = 
+            //{
+            //    new IntPtr(0x2008), // CL_GL_CONTEXT_KHR
+            //    wglContext,
+            //    new IntPtr(0x200B), // CL_WGL_HDC_KHR
+            //    currentDC                
+            //};
+
+            throw new NotImplementedException();
+        }
+
+        public static IntPtr ShareForLinux()
+        {
+            throw new NotImplementedException();
+        }
+        
+
+        public static Context Share(IntPtr openclContext)
+        {
             SizeT devicesSize = SizeT.Zero;
 
-            OpenCLError.Validate(OpenCLDriver.clGetContextInfo(openclContext, CLContextInfo.Devices, SizeT.Zero, IntPtr.Zero, ref devicesSize));
+            CLContext clContext = new CLContext { Value = openclContext };
+
+            OpenCLError.Validate(OpenCLDriver.clGetContextInfo(clContext, CLContextInfo.Devices, SizeT.Zero, IntPtr.Zero, ref devicesSize));
 
             CLDeviceID[] devices = new CLDeviceID[((Int64)(devicesSize)) / IntPtr.Size];
 
@@ -84,7 +111,7 @@ namespace ManOCL
 
             try
             {
-                OpenCLError.Validate(OpenCLDriver.clGetContextInfo(openclContext, CLContextInfo.Devices, devicesSize, devicesHandle.AddrOfPinnedObject(), ref devicesSize));
+                OpenCLError.Validate(OpenCLDriver.clGetContextInfo(clContext, CLContextInfo.Devices, devicesSize, devicesHandle.AddrOfPinnedObject(), ref devicesSize));
 
                 Dictionary<CLPlatformID, CLPlatformID> platformsDictionary = new Dictionary<CLPlatformID, CLPlatformID>();
 
@@ -118,15 +145,16 @@ namespace ManOCL
                     platforms[index++] = platform;
                 }
 
-                return new Context(openclContext, new Platforms(platforms), new Devices(devices));
+                return new Context(clContext, new Platforms(platforms), new Devices(devices));
             }
             finally
             {
                 devicesHandle.Free();
             }
         }
+
         public Devices Devices { get; private set; }
-        
+
         public Platforms Platforms { get; private set; }
 
         #region public static Context Default { get; } /* Singleton */
@@ -137,10 +165,10 @@ namespace ManOCL
             {
                 if (_Default == null)
                 {
-					Platforms platforms = Platforms.Create();
+                    Platforms platforms = Platforms.Create();
                     Devices devices = Devices.Create(CLDeviceType.All, platforms);
-						
-					_Default = Create(platforms, devices);
+
+                    _Default = Create(platforms, devices);
                 }
 
                 return _Default;
@@ -151,28 +179,28 @@ namespace ManOCL
             }
         }
         #endregion
-				
-		internal String ToIndentedString(Int32 ident, Int32 identSize)
-		{
-			String identation = new String(' ', identSize * ident);
-			
-			StringBuilder sb = new StringBuilder();
-			
-			sb.AppendLine(identation + "Context");
-			sb.AppendLine(identation + "{");
-			sb.AppendLine(Platforms.ToIdentedString(ident + 1, identSize));
-			sb.AppendLine(Devices.ToIdentedString(ident + 1, identSize));			
-			sb.AppendLine(identation + "}");
-			
-			return sb.ToString();			
-		}
-		
- 		public override string ToString ()
-		{
-			return ToIndentedString(0, Globals.IdentSize);
-		}
 
-		~Context()
+        internal String ToIndentedString(Int32 ident, Int32 identSize)
+        {
+            String identation = new String(' ', identSize * ident);
+
+            StringBuilder sb = new StringBuilder();
+
+            sb.AppendLine(identation + "Context");
+            sb.AppendLine(identation + "{");
+            sb.AppendLine(Platforms.ToIdentedString(ident + 1, identSize));
+            sb.AppendLine(Devices.ToIdentedString(ident + 1, identSize));
+            sb.AppendLine(identation + "}");
+
+            return sb.ToString();
+        }
+
+        public override string ToString()
+        {
+            return ToIndentedString(0, Globals.IdentSize);
+        }
+
+        ~Context()
         {
             if (!disposed)
             {

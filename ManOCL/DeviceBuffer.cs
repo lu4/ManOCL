@@ -241,25 +241,33 @@ namespace ManOCL
     {
         internal static BufferType CreateInternal<T>(T data, SizeT dataSize, CLMemFlags memFlags, Context context, DeviceBufferAccess access)
         {
-            CLError error = CLError.None;
-
             GCHandle handle = GCHandle.Alloc(data, GCHandleType.Pinned);
+
+            IntPtr hostPtr = handle.AddrOfPinnedObject();
 
             try
             {
-                CLMem mem = OpenCLDriver.clCreateBuffer(context.CLContext, memFlags, dataSize, handle.AddrOfPinnedObject(), ref error);
-                OpenCLError.Validate(error);
-
-                BufferType result = new BufferType();
-                
-                result.InitializeInternal(mem, dataSize, context, access);
-
-                return result;
+                return CreateInternalFromHostPtr(dataSize, memFlags, context, access, hostPtr);
             }
             finally
             {
                 handle.Free();
             }
+        }
+
+        internal static BufferType CreateInternalFromHostPtr(SizeT dataSize, CLMemFlags memFlags, Context context, DeviceBufferAccess access, IntPtr hostPtr)
+        {
+            CLError error = CLError.None;
+            
+            CLMem mem = OpenCLDriver.clCreateBuffer(context.CLContext, memFlags, dataSize, hostPtr, ref error);
+
+            OpenCLError.Validate(error);
+
+            BufferType result = new BufferType();
+
+            result.InitializeInternal(mem, dataSize, context, access);
+
+            return result;
         }
     }
 }
