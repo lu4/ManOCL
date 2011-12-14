@@ -4,20 +4,20 @@ using System.Text;
 using System.IO;
 using ManOCL;
 
-namespace ManOCL.IO
+namespace ManOCL
 {
-    public class DeviceBufferStream : Stream
+    public class DeviceMemoryStream : Stream
     {
         public DeviceBuffer DeviceBuffer { get; private set; }
 
         public CommandQueue CommandQueue { get; private set; }
 
-        public DeviceBufferStream(DeviceBuffer deviceBuffer)
+        public DeviceMemoryStream(DeviceBuffer deviceBuffer)
         {
             this.DeviceBuffer = deviceBuffer;
             this.CommandQueue = CommandQueue.Default;
         }
-        public DeviceBufferStream(DeviceBuffer deviceBuffer, CommandQueue commandQueue)
+        public DeviceMemoryStream(DeviceBuffer deviceBuffer, CommandQueue commandQueue)
         {
             this.DeviceBuffer = deviceBuffer;
             this.CommandQueue = commandQueue;
