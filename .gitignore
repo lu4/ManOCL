@@ -1,5 +1,30 @@
-ManOCL/bin
+Bin
 
-ManOCL/obj
+bin/
+obj/
 
-ManOCL/ManOCL.csproj.user
+*.suo
+*.userprefs
+*.csproj.user
+*.pidb
+
+*/obj/
+*/bin/
+*/*.suo
+*/*.pidb
+*/*.userprefs
+*/*.csproj.user
+
+*/*/obj/
+*/*/bin/
+*/*/*.suo
+*/*/*.pidb
+*/*/*.userprefs
+*/*/*.csproj.user
+
+*/*/*/obj/
+*/*/*/bin/
+*/*/*/*.suo
+*/*/*/*.pidb
+*/*/*/*.userprefs
+*/*/*/*.csproj.user
