@@ -22,28 +22,31 @@ namespace ManOCL
         }
         internal Kernel(CLKernel openclKernel, Program program, CommandQueue commandQueue, String name)
         {
+            this.Name = name;
             this.CLKernel = openclKernel;
 
             this.Program = program;
             this.Context = program.Context;
             this.CommandQueue = commandQueue;
 
-            this.Name = name;
+            this.ArgumentsCount = GetKernelInfo<Int32>(CLKernel, CLKernelInfo.NumArgs);
         }
-
-        internal void InitializeArguments(Argument[] arguments)
+		
+		public Int32 ArgumentsCount { get; private set; }
+		
+        public void SetArguments(Argument[] arguments)
         {
-            Int32 numArgs = GetKernelInfo<Int32>(CLKernel, CLKernelInfo.NumArgs);
-
-            if (arguments == null) throw new ArgumentException(String.Format(Resources.No_arguments_specified_for_kernel, this.Name));
-            if (numArgs != arguments.Length) throw new ArgumentException(String.Format(Resources.Amount_of_arguments_supplied_is_not_equal_to_actual_amount_of_arguments_for_kernel, this.Name));
-			
-            for (Int32 argumentIndex = 0; argumentIndex < arguments.Length; argumentIndex++)
-            {
-				arguments[argumentIndex].SetAsKernelArgument(CLKernel, argumentIndex);
-            }
-
-            this.Arguments = new ReadOnlyIndexer<Argument>(arguments);
+            if (arguments != null)
+			{
+	            if (ArgumentsCount != arguments.Length) throw new ArgumentException(String.Format(Resources.Amount_of_arguments_supplied_is_not_equal_to_actual_amount_of_arguments_for_kernel, this.Name));
+				
+	            for (Int32 argumentIndex = 0; argumentIndex < arguments.Length; argumentIndex++)
+	            {
+					arguments[argumentIndex].SetAsKernelArgument(CLKernel, argumentIndex);
+	            }
+	
+	            this.Arguments = new ReadOnlyIndexer<Argument>(arguments);
+			}
         }
 
         internal Event ExecuteInternal(SizeT[] globalWorkSize)
@@ -311,6 +314,24 @@ namespace ManOCL
             return buffer;
         }
 
+        public static Kernel Create(String name, String source)
+        {
+            return Create(name, new String[] { source }, Program.DefaultBuildOptions, null);
+        }
+        public static Kernel Create(String name, String source, String programBuildOptions)
+        {
+            return Create(name, new String[] { source }, programBuildOptions, null);
+        }
+
+        public static Kernel Create(String name, String[] sources)
+        {
+            return Create(name, CommandQueue.Default, Program.Create(sources, Context.Default, Context.Default.Devices, Program.DefaultBuildOptions), null);
+        }
+        public static Kernel Create(String name, String[] sources, String programBuildOptions)
+        {
+            return Create(name, CommandQueue.Default, Program.Create(sources, Context.Default, Context.Default.Devices, programBuildOptions), null);
+        }
+				
         public static Kernel Create(String name, String source, params Argument[] arguments)
         {
             return Create(name, new String[] { source }, Program.DefaultBuildOptions, arguments);
@@ -335,11 +356,11 @@ namespace ManOCL
 
             CLKernel openclKernel = OpenCLDriver.clCreateKernel(sources.CLProgram, name, ref error);
 
-            Kernel result = new Kernel(openclKernel, sources, commandQueue, name.Length + 1);
+            Kernel kernel = new Kernel(openclKernel, sources, commandQueue, name.Length + 1);
 
-            result.InitializeArguments(arguments);
+            kernel.SetArguments(arguments);
 
-            return result;
+            return kernel;
         }
 
         /* Destructor */

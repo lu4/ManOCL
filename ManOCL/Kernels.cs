@@ -113,7 +113,7 @@ namespace ManOCL
             {
                 if (arguments.ContainsKey(kernel.Name))
                 {
-                    kernel.InitializeArguments(arguments[kernel.Name]);
+                    kernel.SetArguments(arguments[kernel.Name]);
                 }
                 else
                 {
