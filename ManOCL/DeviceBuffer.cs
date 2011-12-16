@@ -9,7 +9,9 @@ using ManOCL.Internal;
 
 namespace ManOCL
 {
-    public abstract class DeviceBuffer : Argument
+	// TODO : Check if object disposed before doing something
+	
+    public abstract class DeviceBuffer : Argument, IDisposable
     {
         private Boolean disposed;
 
@@ -225,15 +227,29 @@ namespace ManOCL
             Write(buffer, 0, bufferOffset, bytesToCopy, commandQueue, eventWaitList);
         }
 
-        ~DeviceBuffer()
-        {
+		#region Destructors implementation
+		public void Dispose()
+		{
+			Dispose(true);
+
+			GC.SuppressFinalize(this);
+		}
+		
+		protected virtual void Dispose(Boolean disposing)
+		{
             if (!disposed)
             {
                 OpenCLError.Validate(OpenCLDriver.clReleaseMemObject(openCLMem));
 
                 disposed = true;
             }
-        }
+		}
+		
+		~DeviceBuffer()
+		{
+			Dispose(false);
+		}
+		#endregion
     }
 
     public class DeviceBuffer<BufferType> : DeviceBuffer

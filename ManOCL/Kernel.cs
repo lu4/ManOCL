@@ -7,9 +7,11 @@ using ManOCL.Internal;
 
 namespace ManOCL
 {
-    public partial class Kernel
+	// TODO : Check if object disposed before doing something
+	
+    public partial class Kernel : IDisposable
     {
-        /* Private members */
+		/* Private members */
         private bool disposed;
 
         /* Internal members */
@@ -28,27 +30,9 @@ namespace ManOCL
             this.Program = program;
             this.Context = program.Context;
             this.CommandQueue = commandQueue;
-
-            this.ArgumentsCount = GetKernelInfo<Int32>(CLKernel, CLKernelInfo.NumArgs);
+			this.Arguments = new KernelArguments(this);
         }
 		
-		public Int32 ArgumentsCount { get; private set; }
-		
-        public void SetArguments(Argument[] arguments)
-        {
-            if (arguments != null)
-			{
-	            if (ArgumentsCount != arguments.Length) throw new ArgumentException(String.Format(Resources.Amount_of_arguments_supplied_is_not_equal_to_actual_amount_of_arguments_for_kernel, this.Name));
-				
-	            for (Int32 argumentIndex = 0; argumentIndex < arguments.Length; argumentIndex++)
-	            {
-					arguments[argumentIndex].SetAsKernelArgument(CLKernel, argumentIndex);
-	            }
-	
-	            this.Arguments = new ReadOnlyIndexer<Argument>(arguments);
-			}
-        }
-
         internal Event ExecuteInternal(SizeT[] globalWorkSize)
         {
             return ExecuteInternal(globalWorkSize, null, Events.Empty, null);
@@ -76,6 +60,30 @@ namespace ManOCL
                 throw new ArgumentException(Resources.LocalWorkSize_and_GlobalWorkSize_dimensions_do_not_agree);
             }
         }
+				
+        public void SetArguments(Argument[] arguments)
+        {
+            if (arguments != null)
+			{
+	            if (Arguments.Count != arguments.Length) throw new ArgumentException(String.Format(Resources.Amount_of_arguments_supplied_is_not_equal_to_actual_amount_of_arguments_for_kernel, this.Name));
+				
+	            for (Int32 argumentIndex = 0; argumentIndex < arguments.Length; argumentIndex++)
+	            {
+					this.Arguments[argumentIndex] = arguments[argumentIndex];
+	            }
+			}
+        }		
+		public void SetArgument(Argument argument, Int32 index)
+		{
+			if (index < Arguments.Count && 0 <= index)
+			{
+				argument.SetAsKernelArgument(CLKernel, index);
+			}
+			else
+			{
+				throw new ArgumentOutOfRangeException("index");
+			}
+		}
 
         /* Public members */
         public Event Execute(Int32 globalWorkSize)
@@ -209,12 +217,17 @@ namespace ManOCL
         {
             return ExecuteInternal(Convert(globalWorkSize), Convert(localWorkSize), eventWaitList, Convert(globalWorkOffset));
         }
-
+		
+		public void Wait()
+		{
+			CommandQueue.Finish();
+		}
+		
         public String Name { get; private set; }
         public Context Context { get; private set; }
         public Program Program { get; private set; }
         public CommandQueue CommandQueue { get; private set; }
-        public ReadOnlyIndexer<Argument> Arguments { get; private set; }
+        public KernelArguments Arguments { get; private set; }
 
         /* Static members */
         private static SizeT[] Convert<T>(T[] data)
@@ -266,7 +279,7 @@ namespace ManOCL
             }
         }
 
-        private static T GetKernelInfo<T>(CLKernel openclKernel, CLKernelInfo kernelInfo)
+        internal static T GetKernelInfo<T>(CLKernel openclKernel, CLKernelInfo kernelInfo)
         {
             Byte[] buffer = GetKernelInfoBuffer(openclKernel, kernelInfo, Marshal.SizeOf(typeof(T)));
 
@@ -281,8 +294,7 @@ namespace ManOCL
                 bufferHandle.Free();
             }
         }
-
-        private static String GetKernelInfoString(CLKernel openclKernel, CLKernelInfo kernelInfo, Int32 kernelInfoBufferSize)
+        internal static String GetKernelInfoString(CLKernel openclKernel, CLKernelInfo kernelInfo, Int32 kernelInfoBufferSize)
         {
             byte[] buffer = GetKernelInfoBuffer(openclKernel, kernelInfo, kernelInfoBufferSize);
 
@@ -290,7 +302,7 @@ namespace ManOCL
 
             return System.Text.ASCIIEncoding.ASCII.GetString(buffer, 0, count < 0 ? buffer.Length : count);
         }
-        private static Byte[] GetKernelInfoBuffer(CLKernel openclKernel, CLKernelInfo kernelInfo, Int32 kernelInfoBufferSize)
+        internal static Byte[] GetKernelInfoBuffer(CLKernel openclKernel, CLKernelInfo kernelInfo, Int32 kernelInfoBufferSize)
         {
             SizeT bufferSize = SizeT.Zero;
 
@@ -361,18 +373,7 @@ namespace ManOCL
             kernel.SetArguments(arguments);
 
             return kernel;
-        }
-
-        /* Destructor */
-        ~Kernel()
-        {
-            if (!disposed)
-            {
-                OpenCLError.Validate(OpenCLDriver.clReleaseKernel(CLKernel));
-
-                disposed = false;
-            }
-        }
+        }		
 
         /* Operators & miscellaneous members */
         public override Int32 GetHashCode()
@@ -406,5 +407,30 @@ namespace ManOCL
                 return !Object.Equals(kernelA.CLKernel, kernelB.CLKernel);
             }
         }
+
+		#region Destructors implementation
+		public void Dispose()
+		{
+			Dispose(true);
+			
+			GC.SuppressFinalize (this);
+		}
+		
+		protected virtual void Dispose(Boolean disposing)
+		{
+            if (!disposed)
+            {				
+                OpenCLError.Validate(OpenCLDriver.clReleaseKernel(CLKernel));
+
+                disposed = true;
+            }
+		}
+		
+        ~Kernel()
+        {
+			Dispose(false);
+        }
+
+		#endregion
     }
 }

@@ -93,6 +93,35 @@ namespace ManOCL
 			}
 		}
 		
+		public static void Wait(Events events)
+		{			
+			OpenCLError.Validate(OpenCLDriver.clWaitForEvents(events.Count, events.OpenCLEventArray));
+		}
+		public static void Wait(params Event[] eventArray)
+		{
+			Wait(new Events(eventArray));
+		}
+		
+		public static void EnqueueWait(CommandQueue commandQueue, Events events)
+		{
+			OpenCLError.Validate(OpenCLDriver.clEnqueueWaitForEvents(commandQueue.CLCommandQueue, events.Count, events.OpenCLEventArray));
+		}
+		
+		public static void EnqueueWait(Events events)
+		{
+			EnqueueWait(CommandQueue.Default, events);
+		}
+		
+		public static void EnqueueWait(CommandQueue commandQueue, params Event[] events)
+		{
+			EnqueueWait(commandQueue, new Events(events));
+		}
+		
+		public static void EnqueueWait(params Event[] events)
+		{
+			EnqueueWait(CommandQueue.Default, new Events(events));
+		}
+		
         // IEnumerable
         public IEnumerator<Event> GetEnumerator()
         {
