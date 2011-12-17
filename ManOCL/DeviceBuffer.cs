@@ -77,7 +77,15 @@ namespace ManOCL
             OpenCLError.Validate(OpenCLDriver.clSetKernelArg(kernel, index, new SizeT(IntPtr.Size), ref openCLMem));
 		}
 		
-        public Int64 Size
+		public Int32 Size
+		{
+			get	
+			{
+				return (Int32)openCLMemSize;
+			}
+		}
+		
+        public Int64 SizeLong
         {
             get
             {
