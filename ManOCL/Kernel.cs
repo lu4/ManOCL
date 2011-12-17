@@ -7,11 +7,11 @@ using ManOCL.Internal;
 
 namespace ManOCL
 {
-	// TODO : Check if object disposed before doing something
-	
+    // TODO : Check if object disposed before doing something
+
     public partial class Kernel : IDisposable
     {
-		/* Private members */
+        /* Private members */
         private bool disposed;
 
         /* Internal members */
@@ -19,7 +19,6 @@ namespace ManOCL
 
         internal Kernel(CLKernel openclKernel, Program program, CommandQueue commandQueue, Int32 kernelInfoBufferSize)
             : this(openclKernel, program, commandQueue, GetKernelInfoString(openclKernel, CLKernelInfo.FunctionName, kernelInfoBufferSize))
-
         {
         }
         internal Kernel(CLKernel openclKernel, Program program, CommandQueue commandQueue, String name)
@@ -30,9 +29,9 @@ namespace ManOCL
             this.Program = program;
             this.Context = program.Context;
             this.CommandQueue = commandQueue;
-			this.Arguments = new KernelArguments(this);
+            this.Arguments = new KernelArguments(this);
         }
-		
+
         internal Event ExecuteInternal(SizeT[] globalWorkSize)
         {
             return ExecuteInternal(globalWorkSize, null, Events.Empty, null);
@@ -60,30 +59,30 @@ namespace ManOCL
                 throw new ArgumentException(Resources.LocalWorkSize_and_GlobalWorkSize_dimensions_do_not_agree);
             }
         }
-				
-        public void SetArguments(Argument[] arguments)
+
+        public void SetArguments(params Argument[] arguments)
         {
             if (arguments != null)
-			{
-	            if (Arguments.Count != arguments.Length) throw new ArgumentException(String.Format(Resources.Amount_of_arguments_supplied_is_not_equal_to_actual_amount_of_arguments_for_kernel, this.Name));
-				
-	            for (Int32 argumentIndex = 0; argumentIndex < arguments.Length; argumentIndex++)
-	            {
-					this.Arguments[argumentIndex] = arguments[argumentIndex];
-	            }
-			}
-        }		
-		public void SetArgument(Argument argument, Int32 index)
-		{
-			if (index < Arguments.Count && 0 <= index)
-			{
-				argument.SetAsKernelArgument(CLKernel, index);
-			}
-			else
-			{
-				throw new ArgumentOutOfRangeException("index");
-			}
-		}
+            {
+                if (Arguments.Count != arguments.Length) throw new ArgumentException(String.Format(Resources.Amount_of_arguments_supplied_is_not_equal_to_actual_amount_of_arguments_for_kernel, this.Name));
+
+                for (Int32 argumentIndex = 0; argumentIndex < arguments.Length; argumentIndex++)
+                {
+                    this.Arguments[argumentIndex] = arguments[argumentIndex];
+                }
+            }
+        }
+        public void SetArgument(Argument argument, Int32 index)
+        {
+            if (index < Arguments.Count && 0 <= index)
+            {
+                argument.SetAsKernelArgument(CLKernel, index);
+            }
+            else
+            {
+                throw new ArgumentOutOfRangeException("index");
+            }
+        }
 
         /* Public members */
         public Event Execute(Int32 globalWorkSize)
@@ -94,6 +93,11 @@ namespace ManOCL
         {
             return Execute(new Int32[] { globalWorkSize }, new Int32[] { localWorkSize });
         }
+        public Event Execute(Int32 globalWorkSize, Int32 localWorkSize, Int32 globalWorkOffset)
+        {
+            return Execute(new Int32[] { globalWorkSize }, new Int32[] { localWorkSize }, new Int32[] { globalWorkOffset });
+        }
+
         public Event Execute(Int32[] globalWorkSize)
         {
             return ExecuteInternal(Convert(globalWorkSize));
@@ -217,12 +221,12 @@ namespace ManOCL
         {
             return ExecuteInternal(Convert(globalWorkSize), Convert(localWorkSize), eventWaitList, Convert(globalWorkOffset));
         }
-		
-		public void Wait()
-		{
-			CommandQueue.Finish();
-		}
-		
+
+        public void Wait()
+        {
+            CommandQueue.Finish();
+        }
+
         public String Name { get; private set; }
         public Context Context { get; private set; }
         public Program Program { get; private set; }
@@ -243,39 +247,39 @@ namespace ManOCL
                 SizeT[] result = new SizeT[data.Length];
 
                 GCHandle handle = GCHandle.Alloc(data, GCHandleType.Pinned);
-				
-				try
-				{				
-	                IntPtr handlePtr = handle.AddrOfPinnedObject();
-	
-	                if (structureSize < IntPtr.Size)
-	                {
-	                    for (int i = 0; i < result.Length; i++)
-	                    {
-	                        byte[] bytes = new byte[4];
-	
-	                        for (int j = 0; j < structureSize; j++)
-	                        {
-	                            bytes[j] = Marshal.ReadByte(handlePtr, i * structureSize + j);
-	                        }
-	
-	                        result[i] = new SizeT(BitConverter.ToInt32(bytes, 0));
-	                    }
-	                }
-	                else
-	                {
-	                    for (int i = 0; i < result.Length; i++)
-	                    {
-	                        result[i] = new SizeT(Marshal.ReadIntPtr(handlePtr, structureSize * i).ToInt64());
-	                    }
-	                }
 
-					return result;
-				}
-				finally
-				{
-					handle.Free();
-				}
+                try
+                {
+                    IntPtr handlePtr = handle.AddrOfPinnedObject();
+
+                    if (structureSize < IntPtr.Size)
+                    {
+                        for (int i = 0; i < result.Length; i++)
+                        {
+                            byte[] bytes = new byte[4];
+
+                            for (int j = 0; j < structureSize; j++)
+                            {
+                                bytes[j] = Marshal.ReadByte(handlePtr, i * structureSize + j);
+                            }
+
+                            result[i] = new SizeT(BitConverter.ToInt32(bytes, 0));
+                        }
+                    }
+                    else
+                    {
+                        for (int i = 0; i < result.Length; i++)
+                        {
+                            result[i] = new SizeT(Marshal.ReadIntPtr(handlePtr, structureSize * i).ToInt64());
+                        }
+                    }
+
+                    return result;
+                }
+                finally
+                {
+                    handle.Free();
+                }
             }
         }
 
@@ -343,7 +347,7 @@ namespace ManOCL
         {
             return Create(name, CommandQueue.Default, Program.Create(sources, Context.Default, Context.Default.Devices, programBuildOptions), null);
         }
-				
+
         public static Kernel Create(String name, String source, params Argument[] arguments)
         {
             return Create(name, new String[] { source }, Program.DefaultBuildOptions, arguments);
@@ -361,7 +365,7 @@ namespace ManOCL
         {
             return Create(name, CommandQueue.Default, Program.Create(sources, Context.Default, Context.Default.Devices, programBuildOptions), arguments);
         }
-        
+
         public static Kernel Create(String name, CommandQueue commandQueue, Program sources, params Argument[] arguments)
         {
             CLError error = CLError.None;
@@ -373,7 +377,7 @@ namespace ManOCL
             kernel.SetArguments(arguments);
 
             return kernel;
-        }		
+        }
 
         /* Operators & miscellaneous members */
         public override Int32 GetHashCode()
@@ -408,29 +412,29 @@ namespace ManOCL
             }
         }
 
-		#region Destructors implementation
-		public void Dispose()
-		{
-			Dispose(true);
-			
-			GC.SuppressFinalize (this);
-		}
-		
-		protected virtual void Dispose(Boolean disposing)
-		{
+        #region Destructors implementation
+        public void Dispose()
+        {
+            Dispose(true);
+
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(Boolean disposing)
+        {
             if (!disposed)
-            {				
+            {
                 OpenCLError.Validate(OpenCLDriver.clReleaseKernel(CLKernel));
 
                 disposed = true;
             }
-		}
-		
-        ~Kernel()
-        {
-			Dispose(false);
         }
 
-		#endregion
+        ~Kernel()
+        {
+            Dispose(false);
+        }
+
+        #endregion
     }
 }
