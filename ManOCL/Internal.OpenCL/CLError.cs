@@ -24,6 +24,7 @@ namespace ManOCL.Internal.OpenCL
         InvalidEventWaitList = -57,
         InvalidGlobalOffset = -56,
         InvalidGlobalWorkSize = -63,
+        InvalidProperty = -64,
         InvalidGLObject = -60,
         InvalidHostPtr = -37,
         InvalidImageFormatDescriptor = -39,
