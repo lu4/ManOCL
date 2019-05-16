@@ -30,6 +30,11 @@ namespace ManOCL
 
         public IList<String> Sources { get; private set; }
 
+        ~Program()
+        {
+            OpenCLDriver.clReleaseProgram(CLProgram);
+        }
+
         /* Static methods */
 
         private static SizeT[] GetLengths(String[] sources)
